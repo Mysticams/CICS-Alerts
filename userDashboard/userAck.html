@@ -1,0 +1,163 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>User Alerts | CICS AlertSOS</title>
+<script src="https://cdn.tailwindcss.com"></script>
+<script src="https://unpkg.com/feather-icons"></script>
+</head>
+<body class="bg-gray-100 font-sans text-gray-800">
+
+  <!-- Navbar -->
+  <custom-navbar class="relative z-50"></custom-navbar>
+
+  <!-- Sidebar -->
+  <custom-sidebar class="relative z-40"></custom-sidebar>
+
+  <main class="pt-[6rem] lg:pt-[7rem] p-4 sm:p-6 md:p-8 transition-all duration-300 lg:ml-64 min-h-screen">
+    <div class="flex flex-col sm:flex-row sm:justify-between sm:items-center gap-4 mb-6">
+      <h1 class="text-2xl sm:text-3xl font-bold text-gray-800 text-center sm:text-left">My Alerts</h1>
+      <div class="flex flex-wrap justify-center sm:justify-end gap-2">
+        <button class="filter-btn bg-red-600 text-white px-4 py-2 rounded-lg font-medium" data-priority="All">All</button>
+        <button class="filter-btn bg-gray-200 text-gray-700 px-4 py-2 rounded-lg font-medium" data-priority="High">High</button>
+        <button class="filter-btn bg-gray-200 text-gray-700 px-4 py-2 rounded-lg font-medium" data-priority="Medium">Medium</button>
+        <button class="filter-btn bg-gray-200 text-gray-700 px-4 py-2 rounded-lg font-medium" data-priority="Low">Low</button>
+      </div>
+    </div>
+
+    <!-- Alerts Table/Card -->
+    <div class="bg-white rounded-2xl shadow-lg overflow-hidden">
+      <div class="hidden sm:block overflow-x-auto">
+        <table class="w-full text-left border-collapse">
+          <thead class="bg-gray-100 text-gray-600 text-sm uppercase">
+            <tr>
+              <th class="py-3 px-4">Alert ID</th>
+              <th class="py-3 px-4">Message</th>
+              <th class="py-3 px-4">Priority</th>
+              <th class="py-3 px-4">Date</th>
+              <th class="py-3 px-4 text-center">Status</th>
+              <th class="py-3 px-4 text-center">Action</th>
+            </tr>
+          </thead>
+          <tbody id="alertsBody" class="text-gray-800"></tbody>
+        </table>
+      </div>
+
+      <div id="alertsCards" class="sm:hidden grid grid-cols-1 gap-4 p-4 text-gray-800"></div>
+    </div>
+  </main>
+
+<script src="components/navbar.js"></script>
+<script src="components/sidebar.js"></script>
+<script>
+feather.replace();
+
+// Simulated user info
+const currentUser = {
+  id: "U001",
+  username: "Juan Dela Cruz",
+  role: "Student"
+};
+
+// Fetch admin alerts and acknowledged alerts
+let adminAlerts = JSON.parse(localStorage.getItem('adminAlerts') || "[]");
+let acknowledgedAlerts = JSON.parse(localStorage.getItem('acknowledgedAlerts') || "[]");
+let allAcknowledgements = JSON.parse(localStorage.getItem('allAcknowledgements') || "[]");
+
+function renderUserAlerts() {
+  const alertsBody = document.getElementById('alertsBody');
+  const alertsCards = document.getElementById('alertsCards');
+  alertsBody.innerHTML = '';
+  alertsCards.innerHTML = '';
+
+  adminAlerts.forEach(alert => {
+    if (!alert.delivery.includes('Web') || !alert.recipients.includes(currentUser.role)) return;
+    const acknowledged = acknowledgedAlerts.includes(alert.id);
+
+    // Table row
+    const tr = document.createElement('tr');
+    tr.dataset.priority = alert.priority;
+    tr.innerHTML = `
+      <td class="py-3 px-4 font-medium">${alert.id}</td>
+      <td class="py-3 px-4">${alert.message}</td>
+      <td class="py-3 px-4 font-semibold ${alert.priority==='High'?'text-red-600':alert.priority==='Medium'?'text-yellow-600':'text-green-600'}">${alert.priority}</td>
+      <td class="py-3 px-4">${new Date(alert.date).toLocaleDateString()}</td>
+      <td class="py-3 px-4 text-center"><span class="px-2 py-1 rounded-full text-sm ${alert.status==='Active'?'bg-red-100 text-red-700':alert.status==='Ongoing'?'bg-yellow-100 text-yellow-700':'bg-green-100 text-green-700'}">${alert.status}</span></td>
+      <td class="py-3 px-4 text-center">
+        <button class="ack-btn px-3 py-1 rounded-lg text-sm ${acknowledged?'bg-gray-300 text-gray-700':'bg-red-600 text-white'}" data-id="${alert.id}" ${acknowledged?'disabled':''}>
+          ${acknowledged ? 'Acknowledged' : 'Acknowledge'}
+        </button>
+      </td>
+    `;
+    alertsBody.appendChild(tr);
+
+    // Mobile card
+    const card = document.createElement('div');
+    card.dataset.priority = alert.priority;
+    card.className = `rounded-xl p-4 shadow-sm border ${alert.priority==='High'?'bg-red-50 border-red-200':alert.priority==='Medium'?'bg-yellow-50 border-yellow-200':'bg-green-50 border-green-200'}`;
+    card.innerHTML = `
+      <div class="flex justify-between items-center">
+        <h3 class="font-semibold text-lg ${alert.priority==='High'?'text-red-700':alert.priority==='Medium'?'text-yellow-700':'text-green-700'}">${alert.id}</h3>
+        <span class="px-2 py-1 rounded-full text-xs ${alert.status==='Active'?'bg-red-100 text-red-700':alert.status==='Ongoing'?'bg-yellow-100 text-yellow-700':'bg-green-100 text-green-700'}">${alert.status}</span>
+      </div>
+      <p class="mt-2 text-sm">${alert.message}</p>
+      <div class="mt-2 flex justify-end">
+        <button class="ack-btn px-3 py-1 rounded-lg text-sm ${acknowledged?'bg-gray-300 text-gray-700':'bg-red-600 text-white'}" data-id="${alert.id}" ${acknowledged?'disabled':''}>
+          ${acknowledged ? 'Acknowledged' : 'Acknowledge'}
+        </button>
+      </div>
+      <span class="text-gray-600 text-sm mt-2 block">Date: ${new Date(alert.date).toLocaleDateString()}</span>
+    `;
+    alertsCards.appendChild(card);
+  });
+
+  // Acknowledge button logic
+  document.querySelectorAll('.ack-btn').forEach(btn => {
+    btn.onclick = () => {
+      const id = btn.dataset.id;
+      if (!acknowledgedAlerts.includes(id)) {
+        acknowledgedAlerts.push(id);
+        localStorage.setItem('acknowledgedAlerts', JSON.stringify(acknowledgedAlerts));
+
+        // Save acknowledgement for admin tracking
+        const alert = adminAlerts.find(a => a.id === id);
+        allAcknowledgements.push({
+          alertId: alert.id,
+          userId: currentUser.id,
+          username: currentUser.username,
+          role: currentUser.role,
+          delivery: alert.delivery, // store delivery methods
+          date: new Date().toISOString()
+        });
+        localStorage.setItem('allAcknowledgements', JSON.stringify(allAcknowledgements));
+
+        renderUserAlerts();
+      }
+    };
+  });
+
+  feather.replace();
+}
+
+renderUserAlerts();
+
+// Filter by priority
+document.querySelectorAll(".filter-btn").forEach(btn => {
+  btn.addEventListener("click", () => {
+    document.querySelectorAll(".filter-btn").forEach(b => {
+      b.classList.remove("bg-red-600","text-white");
+      b.classList.add("bg-gray-200","text-gray-700");
+    });
+    btn.classList.add("bg-red-600","text-white");
+    btn.classList.remove("bg-gray-200","text-gray-700");
+
+    const priority = btn.dataset.priority;
+    [...document.querySelectorAll("#alertsBody tr"), ...document.querySelectorAll("#alertsCards > div")].forEach(card => {
+      card.style.display = (priority==="All" || card.dataset.priority===priority) ? "" : "none";
+    });
+  });
+});
+</script>
+</body>
+</html>

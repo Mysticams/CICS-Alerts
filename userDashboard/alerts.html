@@ -1,0 +1,178 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>User Alerts | CICS AlertSOS</title>
+<script src="https://cdn.tailwindcss.com"></script>
+<script src="https://unpkg.com/feather-icons"></script>
+</head>
+<body class="bg-gray-100 font-sans">
+
+  <!-- Navbar -->
+  <custom-navbar class="relative z-50"></custom-navbar>
+  <!-- Sidebar -->
+  <custom-sidebar class="relative z-40"></custom-sidebar>
+
+  <!-- Main Content -->
+  <main class="pt-[6rem] lg:pt-[7rem] p-4 sm:p-6 md:p-8 transition-all duration-300 lg:ml-64 min-h-screen">
+    <div class="flex flex-col sm:flex-row sm:justify-between sm:items-center gap-4 mb-6">
+      <h1 class="text-2xl sm:text-3xl font-bold text-gray-800 text-center sm:text-left">Alerts</h1>
+      <div class="flex flex-wrap justify-center sm:justify-end gap-2">
+        <button class="filter-btn bg-red-600 text-white px-4 py-2 rounded-lg font-medium" data-priority="All">All</button>
+        <button class="filter-btn bg-gray-200 text-gray-700 px-4 py-2 rounded-lg font-medium" data-priority="High">High</button>
+        <button class="filter-btn bg-gray-200 text-gray-700 px-4 py-2 rounded-lg font-medium" data-priority="Medium">Medium</button>
+        <button class="filter-btn bg-gray-200 text-gray-700 px-4 py-2 rounded-lg font-medium" data-priority="Low">Low</button>
+      </div>
+    </div>
+
+    <!-- Alerts Table/Card -->
+    <div class="bg-white rounded-2xl shadow-lg overflow-hidden">
+      <div class="p-4 flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3 border-b">
+        <h2 class="text-lg sm:text-xl font-semibold text-gray-800">Recent Alerts</h2>
+        <select id="sortSelect" class="border-gray-300 border px-3 py-2 rounded-lg text-sm w-full sm:w-auto">
+          <option value="date-desc">Newest First</option>
+          <option value="date-asc">Oldest First</option>
+          <option value="priority-high">High Priority First</option>
+          <option value="priority-low">Low Priority First</option>
+        </select>
+      </div>
+
+      <!-- Desktop Table -->
+      <div class="hidden sm:block overflow-x-auto">
+        <table class="w-full text-left border-collapse">
+          <thead class="bg-gray-100 text-gray-600 text-sm uppercase">
+            <tr>
+              <th class="py-3 px-4">Alert ID</th>
+              <th class="py-3 px-4">Message</th>
+              <th class="py-3 px-4">Priority</th>
+              <th class="py-3 px-4">Date</th>
+              <th class="py-3 px-4 text-center">Status</th>
+              <th class="py-3 px-4 text-center">Recipients</th>
+              <th class="py-3 px-4 text-center">Delivery</th>
+            </tr>
+          </thead>
+          <tbody id="alertsBody" class="text-gray-800"></tbody>
+        </table>
+      </div>
+
+      <!-- Mobile Cards -->
+      <div id="alertsCards" class="sm:hidden grid grid-cols-1 gap-4 p-4 text-gray-800"></div>
+    </div>
+  </main>
+
+  <script src="components/navbar.js"></script>
+  <script src="components/sidebar.js"></script>
+  <script>
+    feather.replace();
+
+    // Example user alerts
+    const alertsData = [
+      {id:'A001', message:'Fire drill at 3 PM', priority:'High', date:'2025-11-03', status:'Active', recipients:['Students','Faculty'], delivery:['Web','Email']},
+      {id:'A002', message:'Library closed today', priority:'Low', date:'2025-11-02', status:'Resolved', recipients:['Students'], delivery:['Web']},
+      {id:'A003', message:'Server maintenance at 10 PM', priority:'Medium', date:'2025-11-03', status:'Ongoing', recipients:['Staff'], delivery:['Email','Web']}
+    ];
+
+    const alertsBody = document.getElementById('alertsBody');
+    const alertsCards = document.getElementById('alertsCards');
+
+    // Simulated logged-in user role
+    const userRole = 'Students'; // Change per user
+
+    function renderAlerts(){
+      alertsBody.innerHTML='';
+      alertsCards.innerHTML='';
+
+      alertsData.forEach(alert=>{
+        if(!alert.recipients.includes(userRole)) return; // Show only relevant alerts
+
+        const recipients = alert.recipients.join(', ');
+        const delivery = alert.delivery.join(', ');
+
+        // Desktop row
+        const tr = document.createElement('tr');
+        tr.dataset.priority = alert.priority;
+        tr.innerHTML = `
+          <td class="py-3 px-4 font-medium">${alert.id}</td>
+          <td class="py-3 px-4">${alert.message}</td>
+          <td class="py-3 px-4 font-semibold ${alert.priority==='High'?'text-red-600':alert.priority==='Medium'?'text-yellow-600':'text-green-600'}">${alert.priority}</td>
+          <td class="py-3 px-4" data-date="${alert.date}">${new Date(alert.date).toLocaleDateString()}</td>
+          <td class="py-3 px-4 text-center"><span class="px-2 py-1 rounded-full text-sm ${alert.status==='Active'?'bg-red-100 text-red-700':alert.status==='Ongoing'?'bg-yellow-100 text-yellow-700':'bg-green-100 text-green-700'}">${alert.status}</span></td>
+          <td class="py-3 px-4 text-center">${recipients}</td>
+          <td class="py-3 px-4 text-center">${delivery}</td>
+        `;
+        alertsBody.appendChild(tr);
+
+        // Mobile card
+        const card = document.createElement('div');
+        card.dataset.priority = alert.priority;
+        card.className = `rounded-xl p-4 shadow-sm border ${alert.priority==='High'?'bg-red-50 border-red-200':alert.priority==='Medium'?'bg-yellow-50 border-yellow-200':'bg-green-50 border-green-200'}`;
+        card.innerHTML = `
+          <div class="flex justify-between items-center">
+            <h3 class="font-semibold text-lg ${alert.priority==='High'?'text-red-700':alert.priority==='Medium'?'text-yellow-700':'text-green-700'}">${alert.id}</h3>
+            <span class="px-2 py-1 rounded-full text-xs ${alert.status==='Active'?'bg-red-100 text-red-700':alert.status==='Ongoing'?'bg-yellow-100 text-yellow-700':'bg-green-100 text-green-700'}">${alert.status}</span>
+          </div>
+          <p class="mt-2 text-sm">${alert.message}</p>
+          <div class="mt-2 text-sm"><strong>Recipients:</strong> ${recipients}</div>
+          <div class="mt-1 text-sm"><strong>Delivery:</strong> ${delivery}</div>
+          <span class="text-gray-600 text-sm">Date: ${new Date(alert.date).toLocaleDateString()}</span>
+        `;
+        alertsCards.appendChild(card);
+      });
+      feather.replace();
+    }
+
+    // Function to dynamically add a new alert
+    function addNewAlert(alert){
+      alertsData.push(alert);
+      renderAlerts();
+      console.log('New alert received:', alert);
+    }
+
+    // Example: simulate receiving a new alert after 5 seconds
+    setTimeout(()=>{
+      addNewAlert({
+        id:'A004',
+        message:'CICS building maintenance tomorrow',
+        priority:'Medium',
+        date:'2025-11-04',
+        status:'Active',
+        recipients:['Students','Staff'],
+        delivery:['Web','Email']
+      });
+    }, 5000);
+
+    // Filtering
+    const filterButtons = document.querySelectorAll(".filter-btn");
+    filterButtons.forEach(btn=>{
+      btn.addEventListener("click",()=>{
+        filterButtons.forEach(b=>b.classList.remove("bg-red-600","text-white"));
+        filterButtons.forEach(b=>b.classList.add("bg-gray-200","text-gray-700"));
+        btn.classList.add("bg-red-600","text-white");
+        btn.classList.remove("bg-gray-200","text-gray-700");
+        const priority = btn.dataset.priority;
+        [...document.querySelectorAll("#alertsBody tr"), ...document.querySelectorAll("#alertsCards > div")].forEach(item=>{
+          item.style.display = (priority==="All"||item.dataset.priority===priority)?"":"none";
+        });
+      });
+    });
+
+    // Sorting
+    const sortSelect = document.getElementById("sortSelect");
+    sortSelect.addEventListener("change",()=>{
+      const value = sortSelect.value;
+      const priorityOrder = {High:3,Medium:2,Low:1};
+      alertsData.sort((a,b)=>{
+        if(!a.recipients.includes(userRole) || !b.recipients.includes(userRole)) return 0;
+        if(value.includes('date')){
+          return value==='date-asc'? new Date(a.date)-new Date(b.date) : new Date(b.date)-new Date(a.date);
+        } else if(value==='priority-high'){ return priorityOrder[b.priority]-priorityOrder[a.priority]; }
+        else if(value==='priority-low'){ return priorityOrder[a.priority]-priorityOrder[b.priority]; }
+      });
+      renderAlerts();
+    });
+
+    renderAlerts();
+  </script>
+</body>
+</html>

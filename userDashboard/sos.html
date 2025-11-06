@@ -1,0 +1,147 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>User SOS | CICS Alert System</title>
+
+<!-- Tailwind & Bootstrap -->
+<script src="https://cdn.tailwindcss.com"></script>
+<link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+<script src="https://unpkg.com/feather-icons"></script>
+
+<style>
+  body {
+    background-color: #ffffff;
+    font-family: 'Poppins', sans-serif;
+    height: 100vh;
+    overflow-x: hidden;
+  }
+
+  main {
+    margin-left: 16rem; /* space for sidebar */
+    padding-top: 6rem;
+    text-align: center;
+    color: #dc2626;
+  }
+
+  @media (max-width: 768px) {
+    main {
+      margin-left: 0;
+      padding-top: 5rem;
+    }
+  }
+
+  .sos-button {
+    width: 180px;
+    height: 180px;
+    background-color: #dc2626;
+    border-radius: 50%;
+    color: white;
+    font-size: 2rem;
+    font-weight: bold;
+    border: 2px solid #ffffff;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: transform 0.3s ease;
+  }
+
+  .sos-button:hover {
+    transform: scale(1.1);
+  }
+
+  /* Full button pulsing animation */
+  .pulsing {
+    animation: pulseFull 1s infinite;
+  }
+
+  @keyframes pulseFull {
+    0%, 100% {
+      background-color: #dc2626;
+      box-shadow: 0 0 15px #dc2626;
+      transform: scale(1);
+    }
+    50% {
+      background-color: #ff4d4d; /* lighter red for blink effect */
+      box-shadow: 0 0 40px #ff4d4d;
+      transform: scale(1.1);
+    }
+  }
+
+  #message {
+    color: #dc2626;
+    font-weight: 500;
+  }
+</style>
+</head>
+
+<body>
+  <!-- Navbar -->
+  <custom-navbar></custom-navbar>
+
+  <!-- Sidebar -->
+  <custom-sidebar></custom-sidebar>
+
+  <!-- Main content -->
+  <main class="flex flex-col items-center justify-center min-h-screen">
+    <h1 class="text-4xl font-bold mb-4">CICS Emergency SOS</h1>
+    <p class="text-red-500 mb-8">Click the button below to send an emergency alert with your location.</p>
+
+    <button id="sosButton" class="sos-button flex items-center justify-center gap-2">
+      <i data-feather="alert-circle"></i> SOS
+    </button>
+
+    <div id="message" class="hidden mt-6 text-lg text-center">
+      🚨 <span class="font-semibold">SOS Alert Sent!</span><br>
+      Admin has been notified with your location.
+    </div>
+  </main>
+
+  <script src="components/navbar.js"></script>
+  <script src="components/sidebar.js"></script>
+
+  <script>
+    feather.replace();
+
+    const sosButton = document.getElementById('sosButton');
+    const message = document.getElementById('message');
+
+    sosButton.addEventListener('click', () => {
+      sosButton.disabled = true;
+      sosButton.classList.add('pulsing'); // full button pulse
+      message.classList.remove('hidden');
+
+      if (navigator.geolocation) {
+        navigator.geolocation.getCurrentPosition(
+          (position) => {
+            const alertData = {
+              user: "User 001",
+              time: new Date().toLocaleString(),
+              latitude: position.coords.latitude.toFixed(5),
+              longitude: position.coords.longitude.toFixed(5),
+              status: "Active"
+            };
+            localStorage.setItem("sosAlert", JSON.stringify(alertData));
+            alert("🚨 SOS alert sent with location!");
+          },
+          () => {
+            const alertData = {
+              user: "User 001",
+              time: new Date().toLocaleString(),
+              latitude: "Unavailable",
+              longitude: "Unavailable",
+              status: "Active"
+            };
+            localStorage.setItem("sosAlert", JSON.stringify(alertData));
+            alert("⚠️ SOS sent, but location not shared (Permission denied).");
+          }
+        );
+      } else {
+        alert("Geolocation not supported by your browser.");
+      }
+    });
+  </script>
+</body>
+</html>

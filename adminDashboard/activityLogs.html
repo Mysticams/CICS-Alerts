@@ -1,0 +1,199 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>User Activity Logs | CICS AlertSOS</title>
+
+<!-- TailwindCSS + Feather Icons -->
+<script src="https://cdn.tailwindcss.com"></script>
+<script src="https://unpkg.com/feather-icons"></script>
+
+<style>
+  body {
+    background: #f3f4f6;
+  }
+
+  /* Replaced Tailwind @apply with normal CSS */
+  .badge {
+    display: inline-block;
+    padding: 0.25rem 0.75rem; /* px-3 py-1 */
+    border-radius: 9999px; /* rounded-full */
+    font-size: 0.875rem; /* text-sm */
+    font-weight: 500; /* font-medium */
+  }
+</style>
+</head>
+
+<body class="bg-gray-100 font-sans">
+
+  <!-- Navbar -->
+  <custom-navbar class="relative z-50"></custom-navbar>
+
+  <!-- Sidebar -->
+  <custom-sidebar class="relative z-40"></custom-sidebar>
+
+  <main class="pt-20 lg:pt-24 p-6 lg:ml-64 min-h-screen transition-all duration-300">
+    <!-- Page Header -->
+    <div class="flex items-center justify-between mb-6">
+      <h1 class="text-3xl font-bold text-gray-800 tracking-tight">
+        <i data-feather="activity" class="inline w-7 h-7 mr-2 text-red-600"></i>
+        User Activity Logs
+      </h1>
+      <button id="clearLogs" class="px-4 py-2 bg-red-600 hover:bg-red-700 text-white font-medium rounded-lg shadow transition">
+        Clear Logs
+      </button>
+    </div>
+
+    <!-- Logs Container -->
+    <div class="bg-white rounded-2xl shadow-lg overflow-hidden border border-gray-200">
+      <div class="p-4 border-b flex justify-between items-center bg-gray-50">
+        <div class="flex items-center gap-3">
+          <input id="searchInput" type="text" placeholder="Search logs..."
+            class="border border-gray-300 rounded-lg px-3 py-2 w-72 focus:ring-2 focus:ring-red-500 focus:outline-none" />
+          <select id="filterUser" class="border border-gray-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-red-500">
+            <option value="">All Users</option>
+          </select>
+        </div>
+        <p id="entryCount" class="text-gray-500 text-sm"></p>
+      </div>
+
+      <div class="overflow-x-auto">
+        <table class="w-full text-left text-gray-700">
+          <thead class="bg-gray-100 text-gray-600 uppercase text-sm">
+            <tr>
+              <th class="py-3 px-4">User</th>
+              <th class="py-3 px-4">Action</th>
+              <th class="py-3 px-4">Alert ID</th>
+              <th class="py-3 px-4">Timestamp</th>
+              <th class="py-3 px-4 text-center">Status</th>
+              <th class="py-3 px-4">Remarks</th>
+            </tr>
+          </thead>
+          <tbody id="userLogsBody" class="text-sm"></tbody>
+        </table>
+      </div>
+    </div>
+  </main>
+
+<script src="components/navbar.js"></script>
+<script src="components/sidebar.js"></script>
+<script>
+feather.replace();
+
+/*
+Example userActivityLogs structure:
+userActivityLogs = [
+  {
+    username: "Admin: M. Santos",
+    action: "Resolved Alert",
+    alertId: "ALOG-2025-001",
+    status: "Resolved",
+    remarks: "Verified fire drill completion",
+    timestamp: "2025-11-03T15:45:00"
+  }
+];
+*/
+
+let userActivityLogs = JSON.parse(localStorage.getItem("userActivityLogs") || "[]");
+
+// Demo data if empty
+if (userActivityLogs.length === 0) {
+  userActivityLogs = [
+    {
+      username: "Admin: C. Ramos",
+      action: "Created Alert",
+      alertId: "ALOG-2025-001",
+      status: "Active",
+      remarks: "Triggered Fire Drill Alert",
+      timestamp: "2025-11-03T14:10:00"
+    },
+    {
+      username: "Student: J. Dela Cruz",
+      action: "Acknowledged Alert",
+      alertId: "ALOG-2025-002",
+      status: "In Progress",
+      remarks: "Confirmed via Web",
+      timestamp: "2025-11-03T15:10:00"
+    },
+    {
+      username: "IT Staff: K. Lopez",
+      action: "Resolved Alert",
+      alertId: "ALOG-2025-003",
+      status: "Resolved",
+      remarks: "Restarted Alert Server",
+      timestamp: "2025-11-03T15:32:00"
+    }
+  ];
+  localStorage.setItem("userActivityLogs", JSON.stringify(userActivityLogs));
+}
+
+// Render logs
+function renderUserLogs() {
+  const tbody = document.getElementById("userLogsBody");
+  const filterUser = document.getElementById("filterUser").value.toLowerCase();
+  const searchQuery = document.getElementById("searchInput").value.toLowerCase();
+
+  tbody.innerHTML = "";
+
+  // Populate user filter options
+  const uniqueUsers = [...new Set(userActivityLogs.map(log => log.username))];
+  const userSelect = document.getElementById("filterUser");
+  userSelect.innerHTML = '<option value="">All Users</option>' + uniqueUsers.map(u => `<option>${u}</option>`).join("");
+
+  const filteredLogs = userActivityLogs.filter(log => {
+    const text = (log.username + log.action + log.alertId + log.status + log.remarks).toLowerCase();
+    return (
+      (!filterUser || log.username.toLowerCase() === filterUser) &&
+      (!searchQuery || text.includes(searchQuery))
+    );
+  });
+
+  filteredLogs.forEach(log => {
+    const statusColor =
+      log.status === "Resolved"
+        ? "bg-green-100 text-green-800"
+        : log.status === "Active"
+        ? "bg-yellow-100 text-yellow-800"
+        : log.status === "In Progress"
+        ? "bg-blue-100 text-blue-800"
+        : "bg-gray-100 text-gray-800";
+
+    const tr = document.createElement("tr");
+    tr.className = "border-b hover:bg-gray-50 transition";
+    tr.innerHTML = `
+      <td class="py-3 px-4 font-medium">${log.username}</td>
+      <td class="py-3 px-4">${log.action}</td>
+      <td class="py-3 px-4">${log.alertId}</td>
+      <td class="py-3 px-4">${new Date(log.timestamp).toLocaleString()}</td>
+      <td class="py-3 px-4 text-center">
+        <span class="badge ${statusColor}">${log.status}</span>
+      </td>
+      <td class="py-3 px-4">${log.remarks}</td>
+    `;
+    tbody.appendChild(tr);
+  });
+
+  document.getElementById("entryCount").textContent = 
+    `Showing ${filteredLogs.length} of ${userActivityLogs.length} entries`;
+}
+
+// Clear logs
+document.getElementById("clearLogs").addEventListener("click", () => {
+  if (confirm("Are you sure you want to clear all logs?")) {
+    localStorage.removeItem("userActivityLogs");
+    userActivityLogs = [];
+    renderUserLogs();
+  }
+});
+
+// Event listeners
+document.getElementById("searchInput").addEventListener("input", renderUserLogs);
+document.getElementById("filterUser").addEventListener("change", renderUserLogs);
+
+// Initial render
+renderUserLogs();
+</script>
+
+</body>
+</html>

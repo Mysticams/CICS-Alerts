@@ -1,0 +1,89 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Alert Acknowledgements | CICS AlertSOS</title>
+<script src="https://cdn.tailwindcss.com"></script>
+<script src="https://unpkg.com/feather-icons"></script>
+</head>
+<body class="bg-gray-100 font-sans">
+
+  <!-- Navbar -->
+  <custom-navbar class="relative z-50"></custom-navbar>
+
+  <!-- Sidebar -->
+  <custom-sidebar class="relative z-40"></custom-sidebar>
+
+  <main class="pt-20 lg:pt-24 p-4 lg:ml-64 min-h-screen transition-all duration-300">
+    <h1 class="text-2xl sm:text-3xl font-bold mb-6 text-gray-800">Acknowledgement Tracking</h1>
+
+    <!-- Table -->
+    <div class="bg-white rounded-2xl shadow-lg overflow-x-auto">
+      <table class="w-full text-left border-collapse">
+        <thead class="bg-gray-100 text-gray-600 text-sm uppercase">
+          <tr>
+            <th class="py-3 px-4">Alert ID</th>
+            <th class="py-3 px-4">User ID</th>
+            <th class="py-3 px-4">Username</th>
+            <th class="py-3 px-4">User Role</th>
+            <th class="py-3 px-4 text-center">Web</th>
+            <th class="py-3 px-4 text-center">SMS</th>
+            <th class="py-3 px-4 text-center">Email</th>
+            <th class="py-3 px-4 text-center">Acknowledged On</th>
+          </tr>
+        </thead>
+        <tbody id="ackTableBody" class="text-gray-800"></tbody>
+      </table>
+    </div>
+  </main>
+
+<script src="components/navbar.js"></script>
+<script src="components/sidebar.js"></script>
+<script>
+feather.replace();
+
+// Load alerts and acknowledgements
+let adminAlerts = JSON.parse(localStorage.getItem('adminAlerts') || "[]");
+let allAcknowledgements = JSON.parse(localStorage.getItem('allAcknowledgements') || "[]");
+
+/* Example acknowledgement structure in localStorage:
+allAcknowledgements = [
+  {
+    alertId: "AL001",
+    userId: "U001",
+    username: "Juan Dela Cruz",
+    role: "Student",
+    delivery: ["Web","Email"],
+    date: "2025-11-03T14:55:00"
+  }
+];
+*/
+
+function renderAcknowledgements() {
+  const tableBody = document.getElementById('ackTableBody');
+  tableBody.innerHTML = '';
+
+  allAcknowledgements.forEach(ack => {
+    const alert = adminAlerts.find(a => a.id === ack.alertId);
+    if(!alert) return;
+
+    const tr = document.createElement('tr');
+    tr.innerHTML = `
+      <td class="py-3 px-4 font-medium">${alert.id}</td>
+      <td class="py-3 px-4">${ack.userId}</td>
+      <td class="py-3 px-4">${ack.username}</td>
+      <td class="py-3 px-4">${ack.role}</td>
+      <td class="py-3 px-4 text-center">${ack.delivery.includes('Web')? '<span class="text-green-600 font-semibold">✓</span>':''}</td>
+      <td class="py-3 px-4 text-center">${ack.delivery.includes('SMS')? '<span class="text-green-600 font-semibold">✓</span>':''}</td>
+      <td class="py-3 px-4 text-center">${ack.delivery.includes('Email')? '<span class="text-green-600 font-semibold">✓</span>':''}</td>
+      <td class="py-3 px-4 text-center">${new Date(ack.date).toLocaleString()}</td>
+    `;
+    tableBody.appendChild(tr);
+  });
+}
+
+renderAcknowledgements();
+</script>
+</body>
+</html>

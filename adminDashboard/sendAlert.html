@@ -1,0 +1,230 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Send Alert | CICS AlertSOS</title>
+<script src="https://cdn.tailwindcss.com"></script>
+<script src="https://unpkg.com/feather-icons"></script>
+</head>
+<body class="bg-gray-100 font-sans">
+
+  <!-- Navbar -->
+  <custom-navbar class="relative z-50"></custom-navbar>
+
+  <!-- Sidebar -->
+  <custom-sidebar class="relative z-40"></custom-sidebar>
+
+  <main class="pt-20 lg:pt-24 p-4 lg:ml-64 min-h-screen transition-all duration-300">
+    <div class="flex justify-between items-center mb-6">
+      <h1 class="text-2xl sm:text-3xl font-bold text-gray-800">Send Alerts</h1>
+      <button id="addAlertBtn" class="bg-green-600 text-white px-4 py-2 rounded-lg font-medium flex items-center gap-2">
+        <i data-feather="plus"></i> Add Alert
+      </button>
+    </div>
+
+    <!-- Alerts Table -->
+    <div class="bg-white rounded-2xl shadow-lg overflow-hidden">
+      <div class="hidden sm:block overflow-x-auto">
+        <table class="w-full text-left border-collapse">
+          <thead class="bg-gray-100 text-gray-600 text-sm uppercase">
+            <tr>
+              <th class="py-3 px-4">Alert ID</th>
+              <th class="py-3 px-4">Message</th>
+              <th class="py-3 px-4">Priority</th>
+              <th class="py-3 px-4">Date</th>
+              <th class="py-3 px-4">Status</th>
+              <th class="py-3 px-4">Recipients</th>
+              <th class="py-3 px-4">Delivery</th>
+              <th class="py-3 px-4 text-center">Actions</th>
+            </tr>
+          </thead>
+          <tbody id="alertsBody" class="text-gray-800"></tbody>
+        </table>
+      </div>
+
+      <!-- Mobile cards -->
+      <div id="alertsCards" class="sm:hidden grid grid-cols-1 gap-4 p-4 text-gray-800"></div>
+    </div>
+  </main>
+
+  <!-- Modal for adding/editing alerts -->
+  <div id="alertModal" class="fixed inset-0 flex items-center justify-center bg-black bg-opacity-50 hidden z-50">
+    <div class="bg-white rounded-2xl p-6 w-full max-w-md">
+      <h3 id="modalTitle" class="text-xl font-semibold mb-4">Add Alert</h3>
+      <form id="alertForm" class="flex flex-col gap-4">
+        <input type="text" id="alertID" placeholder="Alert ID" class="border px-3 py-2 rounded-lg w-full" required>
+        <textarea id="alertMessage" placeholder="Message" class="border px-3 py-2 rounded-lg w-full" rows="3" required></textarea>
+        <select id="alertPriority" class="border px-3 py-2 rounded-lg w-full" required>
+          <option value="">Select Priority</option>
+          <option value="High">High</option>
+          <option value="Medium">Medium</option>
+          <option value="Low">Low</option>
+        </select>
+        <input type="date" id="alertDate" class="border px-3 py-2 rounded-lg w-full" required>
+        <select id="alertStatus" class="border px-3 py-2 rounded-lg w-full" required>
+          <option value="">Select Status</option>
+          <option value="Active">Active</option>
+          <option value="Ongoing">Ongoing</option>
+          <option value="Resolved">Resolved</option>
+        </select>
+
+        <div class="flex flex-col gap-1">
+          <label class="font-semibold">Recipients:</label>
+          <div class="flex gap-2">
+            <label><input type="checkbox" class="recipient-checkbox" value="Students"> Students</label>
+            <label><input type="checkbox" class="recipient-checkbox" value="Faculty"> Faculty</label>
+            <label><input type="checkbox" class="recipient-checkbox" value="Staff"> Staff</label>
+          </div>
+        </div>
+
+        <div class="flex flex-col gap-1">
+          <label class="font-semibold">Delivery:</label>
+          <div class="flex gap-2">
+            <label><input type="checkbox" class="delivery-checkbox" value="SMS"> SMS</label>
+            <label><input type="checkbox" class="delivery-checkbox" value="Email"> Email</label>
+            <label><input type="checkbox" class="delivery-checkbox" value="Web"> Web</label>
+          </div>
+        </div>
+
+        <div class="flex justify-end gap-2">
+          <button type="button" id="closeModal" class="px-4 py-2 rounded-lg border border-gray-300">Cancel</button>
+          <button type="submit" class="px-4 py-2 rounded-lg bg-green-600 text-white">Save & Send</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+<script src="components/navbar.js"></script>
+<script src="components/sidebar.js"></script>
+<script>
+feather.replace();
+
+let alertsData = JSON.parse(localStorage.getItem('adminAlerts') || "[]");
+const alertsBody = document.getElementById('alertsBody');
+const alertsCards = document.getElementById('alertsCards');
+
+// Render alerts
+function renderAlerts() {
+  alertsBody.innerHTML = '';
+  alertsCards.innerHTML = '';
+
+  alertsData.forEach(alert => {
+    const recipients = alert.recipients.join(', ');
+    const delivery = alert.delivery.join(', ');
+
+    // Table row
+    const tr = document.createElement('tr');
+    tr.dataset.priority = alert.priority;
+    tr.innerHTML = `
+      <td class="py-3 px-4 font-medium">${alert.id}</td>
+      <td class="py-3 px-4">${alert.message}</td>
+      <td class="py-3 px-4 font-semibold ${alert.priority==='High'?'text-red-600':alert.priority==='Medium'?'text-yellow-600':'text-green-600'}">${alert.priority}</td>
+      <td class="py-3 px-4">${new Date(alert.date).toLocaleDateString()}</td>
+      <td class="py-3 px-4 text-center"><span class="px-2 py-1 rounded-full text-sm ${alert.status==='Active'?'bg-red-100 text-red-700':alert.status==='Ongoing'?'bg-yellow-100 text-yellow-700':'bg-green-100 text-green-700'}">${alert.status}</span></td>
+      <td class="py-3 px-4 text-center">${recipients}</td>
+      <td class="py-3 px-4 text-center">${delivery}</td>
+      <td class="py-3 px-4 text-center flex justify-center gap-2">
+        <button class="edit-btn text-blue-500" data-id="${alert.id}"><i data-feather="edit"></i></button>
+        <button class="delete-btn text-red-500" data-id="${alert.id}"><i data-feather="trash-2"></i></button>
+      </td>
+    `;
+    alertsBody.appendChild(tr);
+
+    // Mobile Card
+    const card = document.createElement('div');
+    card.dataset.priority = alert.priority;
+    card.className = `rounded-xl p-4 shadow-sm border ${alert.priority==='High'?'bg-red-50 border-red-200':alert.priority==='Medium'?'bg-yellow-50 border-yellow-200':'bg-green-50 border-green-200'}`;
+    card.innerHTML = `
+      <div class="flex justify-between items-center">
+        <h3 class="font-semibold text-lg">${alert.id}</h3>
+        <span class="px-2 py-1 rounded-full text-xs ${alert.status==='Active'?'bg-red-100 text-red-700':alert.status==='Ongoing'?'bg-yellow-100 text-yellow-700':'bg-green-100 text-green-700'}">${alert.status}</span>
+      </div>
+      <p class="mt-2 text-sm">${alert.message}</p>
+      <div class="mt-2 text-sm"><strong>Recipients:</strong> ${recipients}</div>
+      <div class="mt-1 text-sm"><strong>Delivery:</strong> ${delivery}</div>
+      <div class="mt-3 flex justify-end gap-2">
+        <button class="edit-btn text-blue-500" data-id="${alert.id}"><i data-feather="edit"></i></button>
+        <button class="delete-btn text-red-500" data-id="${alert.id}"><i data-feather="trash-2"></i></button>
+      </div>
+      <span class="text-gray-600 text-sm">Date: ${new Date(alert.date).toLocaleDateString()}</span>
+    `;
+    alertsCards.appendChild(card);
+  });
+  feather.replace();
+  attachActions();
+  localStorage.setItem('adminAlerts', JSON.stringify(alertsData));
+}
+
+// Edit/Delete buttons
+function attachActions() {
+  document.querySelectorAll('.edit-btn').forEach(btn => btn.onclick = () => openModal('edit', btn.dataset.id));
+  document.querySelectorAll('.delete-btn').forEach(btn => {
+    btn.onclick = () => {
+      if(confirm('Are you sure?')) {
+        alertsData = alertsData.filter(a => a.id !== btn.dataset.id);
+        renderAlerts();
+      }
+    };
+  });
+}
+
+// Modal logic
+const modal = document.getElementById('alertModal');
+const form = document.getElementById('alertForm');
+const modalTitle = document.getElementById('modalTitle');
+const closeModalBtn = document.getElementById('closeModal');
+let editID = null;
+
+document.getElementById('addAlertBtn').onclick = () => openModal('add');
+closeModalBtn.onclick = () => modal.classList.add('hidden');
+
+function openModal(mode, id = null) {
+  modal.classList.remove('hidden');
+  if(mode === 'add') {
+    modalTitle.textContent = 'Add Alert';
+    form.reset();
+    editID = null;
+  } else {
+    modalTitle.textContent = 'Edit Alert';
+    editID = id;
+    const alert = alertsData.find(a => a.id === id);
+    document.getElementById('alertID').value = alert.id;
+    document.getElementById('alertMessage').value = alert.message;
+    document.getElementById('alertPriority').value = alert.priority;
+    document.getElementById('alertDate').value = alert.date;
+    document.getElementById('alertStatus').value = alert.status;
+    document.querySelectorAll('.recipient-checkbox').forEach(cb => cb.checked = alert.recipients.includes(cb.value));
+    document.querySelectorAll('.delivery-checkbox').forEach(cb => cb.checked = alert.delivery.includes(cb.value));
+  }
+}
+
+// Save alert
+form.onsubmit = e => {
+  e.preventDefault();
+  const recipients = Array.from(document.querySelectorAll('.recipient-checkbox:checked')).map(cb => cb.value);
+  const delivery = Array.from(document.querySelectorAll('.delivery-checkbox:checked')).map(cb => cb.value);
+  if(recipients.length===0 || delivery.length===0) { alert('Select at least 1 recipient and 1 delivery option'); return; }
+
+  const newAlert = {
+    id: document.getElementById('alertID').value,
+    message: document.getElementById('alertMessage').value,
+    priority: document.getElementById('alertPriority').value,
+    date: document.getElementById('alertDate').value,
+    status: document.getElementById('alertStatus').value,
+    recipients,
+    delivery
+  };
+
+  if(editID) alertsData = alertsData.map(a => a.id===editID? newAlert : a);
+  else alertsData.push(newAlert);
+
+  modal.classList.add('hidden');
+  renderAlerts();
+  alert('Alert saved and available to users!');
+};
+
+renderAlerts();
+</script>
+</body>
+</html>
