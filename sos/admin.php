@@ -6,8 +6,6 @@ if (!isset($_SESSION['logged_in']) || $_SESSION['user_role'] !== 'admin') {
     header("Location: ../loginSignup/login.php");
     exit;
 }
-
-$userId = (int)$_SESSION['user_id'];
 ?>
 <!doctype html>
 <html lang="en">
@@ -18,9 +16,9 @@ $userId = (int)$_SESSION['user_id'];
     <meta name="viewport" content="width=device-width,initial-scale=1">
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css">
     <link rel="stylesheet" href="https://unpkg.com/leaflet/dist/leaflet.css" />
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.1/font/bootstrap-icons.css">
 
     <style>
-        /* === Red + White admin theme, responsive, collapsible sidebar === */
         :root {
             --red: #d32f2f;
             --dark-red: #b71c1c;
@@ -34,7 +32,6 @@ $userId = (int)$_SESSION['user_id'];
             margin: 0;
         }
 
-        /* Layout */
         .app-shell {
             display: flex;
             height: 100vh;
@@ -72,7 +69,6 @@ $userId = (int)$_SESSION['user_id'];
             gap: 12px;
         }
 
-        /* Top bar */
         .topbar {
             display: flex;
             align-items: center;
@@ -106,7 +102,6 @@ $userId = (int)$_SESSION['user_id'];
             color: white;
         }
 
-        /* Map container */
         #map {
             height: calc(100vh - 120px);
             border-radius: 10px;
@@ -114,7 +109,6 @@ $userId = (int)$_SESSION['user_id'];
             box-shadow: 0 8px 30px rgba(0, 0, 0, 0.15);
         }
 
-        /* User list */
         .user-list {
             margin-top: 8px;
             display: flex;
@@ -155,7 +149,6 @@ $userId = (int)$_SESSION['user_id'];
             border-radius: 10px;
         }
 
-        /* Marker styles for L.divIcon */
         .leaflet-div-icon.marker-red {
             width: 18px;
             height: 18px;
@@ -190,7 +183,6 @@ $userId = (int)$_SESSION['user_id'];
             animation: blink 1s infinite;
         }
 
-        /* Collapsible sidebar behavior for small screens */
         @media (max-width: 991px) {
             .sidebar {
                 position: fixed;
@@ -207,7 +199,6 @@ $userId = (int)$_SESSION['user_id'];
             }
         }
 
-        /* Misc */
         .badge-red {
             background: var(--red);
             color: white;
@@ -215,12 +206,48 @@ $userId = (int)$_SESSION['user_id'];
             padding: 6px 10px;
             border-radius: 10px;
         }
+
+        /* Chat container */
+        #chatContainer {
+            position: fixed;
+            bottom: 70px;
+            right: 20px;
+            width: 400px;
+            height: 600px;
+            z-index: 9999;
+            border-radius: 10px;
+            overflow: hidden;
+            display: block;
+            transition: none;
+            /* remove any opacity/transform transition */
+            opacity: 1;
+            /* ensure fully opaque */
+        }
+
+
+
+        #toggleChat {
+            position: fixed;
+            bottom: 20px;
+            right: 20px;
+            z-index: 10000;
+            background: var(--red);
+            color: white;
+            border: none;
+            border-radius: 50%;
+            width: 50px;
+            height: 50px;
+            font-size: 1.5rem;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
     </style>
 </head>
 
 <body>
     <div class="app-shell">
-        <!-- Sidebar (collapsible) -->
         <aside class="sidebar" id="sidebar">
             <div class="d-flex justify-content-between align-items-start">
                 <div>
@@ -244,12 +271,9 @@ $userId = (int)$_SESSION['user_id'];
                 </div>
             </div>
 
-            <div class="user-list" id="users" aria-live="polite">
-                <!-- Users injected here -->
-            </div>
+            <div class="user-list" id="users" aria-live="polite"></div>
         </aside>
 
-        <!-- Main content -->
         <main class="main">
             <div class="topbar">
                 <div class="top-left">
@@ -257,18 +281,23 @@ $userId = (int)$_SESSION['user_id'];
                     <div class="title">Live SOS Map (Admin)</div>
                 </div>
             </div>
-
             <div id="map"></div>
         </main>
     </div>
 
-    <!-- SOS alarm sound -->
+    <!-- Chat toggle button -->
+    <button id="toggleChat"><i class="bi bi-chat-dots-fill" id="chatIcon"></i></button>
+
+    <!-- Chat container -->
+    <div id="chatContainer">
+        <iframe src="chat_admin.php" style="width:100%; height:100%; border:none;"></iframe>
+    </div>
+
     <audio id="sosAlert" src="https://actions.google.com/sounds/v1/alarms/alarm_clock.ogg" preload="auto" loop></audio>
 
     <script src="https://unpkg.com/leaflet/dist/leaflet.js"></script>
     <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
 
-    <!-- === SOS Map JS === -->
     <script>
         const endpoints = {
             users: 'ajax_admin_users.php',
@@ -277,21 +306,17 @@ $userId = (int)$_SESSION['user_id'];
         let map = L.map('map').setView([14.167, 121.241], 13);
         L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png').addTo(map);
 
-        let userMarkers = {};
-        let pollInterval = 3000;
-        let sosSound = document.getElementById('sosAlert');
-        let lastSOSCount = 0;
+        let userMarkers = {},
+            pollInterval = 3000,
+            sosSound = document.getElementById('sosAlert'),
+            lastSOSCount = 0;
 
-        if ("Notification" in window && Notification.permission !== "granted") {
-            Notification.requestPermission();
-        }
+        if ("Notification" in window && Notification.permission !== "granted") Notification.requestPermission();
 
         function notifyAdmin(name) {
-            if (Notification.permission === "granted") {
-                new Notification("🚨 SOS Alert!", {
-                    body: `${name} activated SOS!`
-                });
-            }
+            if (Notification.permission === "granted") new Notification("🚨 SOS Alert!", {
+                body: `${name} activated SOS!`
+            });
             const orig = document.title;
             document.title = "🚨 SOS ALERT!";
             setTimeout(() => document.title = orig, 3500);
@@ -308,12 +333,10 @@ $userId = (int)$_SESSION['user_id'];
             const list = $('#users').empty();
             let activeSOS = 0;
             let newSOSUsers = [];
-
             users.forEach(u => {
-                const lat = parseFloat(u.lat);
-                const lng = parseFloat(u.lng);
+                const lat = parseFloat(u.lat),
+                    lng = parseFloat(u.lng);
                 if (isNaN(lat) || isNaN(lng)) return;
-
                 const iconCls = u.sos_active ? 'marker-red blink' : 'marker-green';
                 const icon = L.divIcon({
                     className: `leaflet-div-icon ${iconCls}`
@@ -339,35 +362,24 @@ $userId = (int)$_SESSION['user_id'];
 
                 const item = $('<div>').addClass(u.sos_active ? 'sos-item' : 'normal-item');
                 const timeStr = u.updated_ts ? new Date(u.updated_ts * 1000).toLocaleString() : '';
-                const html = `<div style="display:flex;justify-content:space-between;align-items:center;">
-                                <div style="flex:1">
-                                    <strong>${escapeHtml(u.name)}</strong><br>
-                                    <small>Lat: ${lat.toFixed(5)}, Lng: ${lng.toFixed(5)}</small><br>
-                                    <small class="text-muted">${timeStr}</small>
-                                </div>
-                              </div>`;
-                item.html(html);
-
+                item.html(`<div style="display:flex;justify-content:space-between;align-items:center;"><div style="flex:1"><strong>${escapeHtml(u.name)}</strong><br><small>Lat: ${lat.toFixed(5)}, Lng: ${lng.toFixed(5)}</small><br><small class="text-muted">${timeStr}</small></div></div>`);
                 const actions = $('<div class="user-actions mt-2"></div>');
                 const focusBtn = $('<button class="btn btn-sm btn-outline-danger">Focus</button>').on('click', () => {
                     map.setView([lat, lng], 16);
                     if (userMarkers[u.id]) userMarkers[u.id].openPopup();
                 });
                 actions.append(focusBtn);
-
                 if (u.sos_active) {
                     const resolveBtn = $('<button class="btn btn-sm btn-danger">Resolve</button>').on('click', () => {
                         resolveSOS(u.id);
                     });
                     actions.append(resolveBtn);
                 }
-
                 item.append(actions);
                 list.append(item);
             });
 
             $('#sosCounter').text(activeSOS);
-
             if (activeSOS > lastSOSCount) {
                 sosSound.currentTime = 0;
                 sosSound.play().catch(() => {});
@@ -377,12 +389,10 @@ $userId = (int)$_SESSION['user_id'];
                     if (userMarkers[u.id]) userMarkers[u.id].openPopup();
                 });
             }
-
             if (activeSOS === 0) {
                 sosSound.pause();
                 sosSound.currentTime = 0;
             }
-
             lastSOSCount = activeSOS;
         }
 
@@ -407,162 +417,40 @@ $userId = (int)$_SESSION['user_id'];
         }
 
         function escapeHtml(s) {
-            return String(s || '').replace(/[&<>"'\/]/g, function(c) {
-                return {
-                    '&': '&amp;',
-                    '<': '&lt;',
-                    '>': '&gt;',
-                    '"': '&quot;',
-                    "'": '&#39;',
-                    '/': '&#x2F;'
-                } [c];
-            });
+            return String(s || '').replace(/[&<>"'\/]/g, c => ({
+                '&': '&amp;',
+                '<': '&lt;',
+                '>': '&gt;',
+                '"': '&quot;',
+                "'": '&#39;',
+                '/': '&#x2F;'
+            } [c]));
         }
 
         $(document).ready(function() {
             $('#closeSidebar').on('click', () => $('#sidebar').addClass('collapsed'));
             $('#openSidebar').on('click', () => $('#sidebar').removeClass('collapsed'));
             $('#refreshBtn').on('click', fetchUsers);
-
             fetchUsers();
             setInterval(fetchUsers, pollInterval);
         });
-    </script>
 
-    <!-- ===== Chat Panel ===== -->
-    <div id="chatContainer">
-        <div id="chatHeader">Chat with Admin</div>
-        <div id="chatMessages"></div>
-        <div id="chatInputContainer">
-            <input type="text" id="chatInput" placeholder="Type a message..." style="flex:1;">
-            <button id="chatSendBtn">Send</button>
-        </div>
-    </div>
+        const toggleBtn = document.getElementById('toggleChat');
+        const chatContainer = document.getElementById('chatContainer');
+        const chatIcon = document.getElementById('chatIcon');
+        let isOpen = true;
 
-    <style>
-        #chatContainer {
-            position: fixed;
-            bottom: 20px;
-            right: 20px;
-            width: 320px;
-            max-height: 500px;
-            background: #fff;
-            border: 2px solid #d32f2f;
-            border-radius: 12px;
-            display: flex;
-            flex-direction: column;
-            overflow: hidden;
-            box-shadow: 0 8px 25px rgba(0, 0, 0, 0.2);
-            font-family: Arial, sans-serif;
-            z-index: 1600;
-        }
-
-        #chatContainer.collapsed {
-            height: 40px;
-            width: 200px;
-            overflow: hidden;
-        }
-
-        #chatHeader {
-            background: #d32f2f;
-            color: white;
-            font-weight: 700;
-            padding: 12px;
-            cursor: pointer;
-        }
-
-        #chatMessages {
-            flex: 1;
-            overflow-y: auto;
-            padding: 10px;
-            background: #fff0f0;
-        }
-
-        .chatMsg {
-            margin-bottom: 8px;
-            padding: 6px 12px;
-            border-radius: 12px;
-            max-width: 80%;
-            word-wrap: break-word;
-        }
-
-        .chatMsg.user {
-            background: #d32f2f;
-            color: white;
-            margin-left: auto;
-        }
-
-        .chatMsg.admin {
-            background: #fff;
-            color: #222;
-            border: 1px solid #d32f2f;
-        }
-
-        #chatInputContainer {
-            display: flex;
-            gap: 6px;
-            border-top: 1px solid #d32f2f;
-            padding: 6px;
-        }
-
-        #chatInput {
-            flex: 1;
-            border-radius: 8px;
-            border: 1px solid #d32f2f;
-            padding: 6px 10px;
-        }
-
-        #chatSendBtn {
-            background: #d32f2f;
-            color: white;
-            border: none;
-            padding: 6px 12px;
-            border-radius: 8px;
-            cursor: pointer;
-        }
-    </style>
-
-    <script>
-        let chatVisible = true;
-        $('#chatHeader').on('click', () => $('#chatContainer').toggleClass('collapsed'));
-
-        const otherId = 1; // Admin ID
-        function fetchMessages() {
-            $.getJSON('ajax_fetch_messages.php', {
-                other_id: otherId
-            }, res => {
-                if (res.status === 'ok') {
-                    const chatMessages = $('#chatMessages').empty();
-                    res.messages.forEach(m => {
-                        const cls = m.sender_id == <?php echo $userId; ?> ? 'user' : 'admin';
-                        chatMessages.append(`<div class="chatMsg ${cls}">${m.message}</div>`);
-                    });
-                    $('#chatMessages').scrollTop($('#chatMessages')[0].scrollHeight);
-                }
-            });
-        }
-
-        $('#chatSendBtn').on('click', sendMessage);
-        $('#chatInput').on('keypress', e => {
-            if (e.key === 'Enter') sendMessage();
+        toggleBtn.addEventListener('click', () => {
+            if (isOpen) {
+                chatContainer.style.display = 'none';
+                chatIcon.className = 'bi bi-chat-dots';
+                isOpen = false;
+            } else {
+                chatContainer.style.display = 'block';
+                chatIcon.className = 'bi bi-chat-dots-fill';
+                isOpen = true;
+            }
         });
-
-        function sendMessage() {
-            const msg = $('#chatInput').val().trim();
-            if (!msg) return;
-            $.post('ajax_send_message.php', {
-                receiver_id: otherId,
-                message: msg
-            }, res => {
-                if (res.status === 'ok') {
-                    $('#chatInput').val('');
-                    fetchMessages();
-                }
-            }, 'json');
-        }
-
-        setInterval(fetchMessages, 2000);
-        fetchMessages();
     </script>
 </body>
 

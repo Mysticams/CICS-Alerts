@@ -33,9 +33,7 @@ $sosActive = (int)$user['sos_active'];
     <meta name="viewport" content="width=device-width,initial-scale=1">
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
     <link rel="stylesheet" href="https://unpkg.com/leaflet/dist/leaflet.css" />
-    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
-    <script src="https://unpkg.com/leaflet/dist/leaflet.js"></script>
-
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.5/font/bootstrap-icons.css" rel="stylesheet">
     <style>
         :root {
             --red: #d32f2f;
@@ -86,7 +84,7 @@ $sosActive = (int)$user['sos_active'];
             justify-content: center;
             color: #fff;
             font-weight: 800;
-            box-shadow: 0 6px 20px rgba(211, 47, 47, 0.2);
+            box-shadow: 0 6px 20px rgba(211, 47, 47, 0.2)
         }
 
         .title {
@@ -155,6 +153,7 @@ $sosActive = (int)$user['sos_active'];
             display: block;
             font-size: 1.05rem;
             line-height: 1;
+            text-transform: none;
         }
 
         .sos-button:hover {
@@ -204,6 +203,7 @@ $sosActive = (int)$user['sos_active'];
 
         .loc-btn:hover svg {
             stroke: #fff;
+            fill: none;
         }
 
         .user-marker-svg {
@@ -237,87 +237,6 @@ $sosActive = (int)$user['sos_active'];
             }
         }
 
-        #chatContainer {
-            position: fixed;
-            bottom: 20px;
-            right: 20px;
-            width: 320px;
-            max-height: 500px;
-            background: #fff;
-            border: 2px solid var(--red);
-            border-radius: 12px;
-            display: flex;
-            flex-direction: column;
-            overflow: hidden;
-            box-shadow: 0 8px 25px rgba(0, 0, 0, 0.2);
-            font-family: Arial, sans-serif;
-            z-index: 1600;
-        }
-
-        #chatContainer.collapsed {
-            height: 40px;
-            width: 200px;
-            overflow: hidden;
-        }
-
-        #chatHeader {
-            background: var(--red);
-            color: white;
-            font-weight: 700;
-            padding: 12px;
-            cursor: pointer;
-        }
-
-        #chatMessages {
-            flex: 1;
-            overflow-y: auto;
-            padding: 10px;
-            background: #fff0f0;
-        }
-
-        .chatMsg {
-            margin-bottom: 8px;
-            padding: 6px 12px;
-            border-radius: 12px;
-            max-width: 80%;
-            word-wrap: break-word;
-        }
-
-        .chatMsg.user {
-            background: var(--red);
-            color: white;
-            margin-left: auto;
-        }
-
-        .chatMsg.admin {
-            background: #fff;
-            color: #222;
-            border: 1px solid var(--red);
-        }
-
-        #chatInputContainer {
-            display: flex;
-            gap: 6px;
-            border-top: 1px solid var(--red);
-            padding: 6px;
-        }
-
-        #chatInput {
-            flex: 1;
-            border-radius: 8px;
-            border: 1px solid var(--red);
-            padding: 6px 10px;
-        }
-
-        #chatSendBtn {
-            background: var(--red);
-            color: white;
-            border: none;
-            padding: 6px 12px;
-            border-radius: 8px;
-            cursor: pointer;
-        }
-
         @media (max-width:576px) {
             .sos-button {
                 width: 120px;
@@ -340,6 +259,48 @@ $sosActive = (int)$user['sos_active'];
                 height: 56px;
             }
         }
+
+        /* Chat container */
+        #chatContainer {
+            position: fixed;
+            bottom: 70px;
+            right: 20px;
+            width: 400px;
+            height: 600px;
+            z-index: 9999;
+            border-radius: 10px;
+            overflow: hidden;
+            display: block;
+        }
+
+        /* Chat toggle button */
+        #toggleChat {
+            position: fixed;
+            bottom: 20px;
+            right: 20px;
+            z-index: 10000;
+            background: var(--red);
+            color: white;
+            border: none;
+            border-radius: 50%;
+            width: 50px;
+            height: 50px;
+            font-size: 1.5rem;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: background 0.2s ease;
+        }
+
+        #toggleChat:hover {
+            background: var(--dark-red);
+        }
+
+        #toggleChat i {
+            font-size: 1.5rem;
+            transition: color 0.2s ease;
+        }
     </style>
 </head>
 
@@ -357,47 +318,53 @@ $sosActive = (int)$user['sos_active'];
                 <div class="sub">Last known shown if GPS off</div>
             </div>
         </div>
+
         <div id="map"></div>
     </div>
 
-    <!-- SOS Button -->
+    <!-- Floating center SOS button -->
     <div class="float-center-bottom">
         <button id="sosBtn" class="sos-button" aria-pressed="<?php echo $sosActive ? 'true' : 'false'; ?>">
-            <svg viewBox="0 0 24 24">
-                <path d="M12 4c.38 0 .72.21.88.55l7 14A1 1 0 0 1 19 20H5a1 1 0 0 1-.88-1.45l7-14A.99.99 0 0 1 12 4zm0 4a1 1 0 0 0-1 1v4a1 1 0 0 0 2 0V9a1 1 0 0 0-1-1zm0 8a1.25 1.25 0 1 0 0-2.5A1.25 1.25 0 0 0 12 16z" />
+            <svg viewBox="0 0 24 24" aria-hidden="true" focusable="false">
+                <path d="M12 4c.38 0 .72.21.88.55l7 14A1 1 0 0 1 19 20H5a1 1 0 0 1-.88-1.45l7-14A.99.99 0 0 1 12 4zm0 4a1 1 0 0 0-1 1v4a1 
+        1 0 0 0 2 0V9a1 1 0 0 0-1-1zm0 8a1.25 1.25 0 1 0 0-2.5A1.25 1.25 0 0 0 12 16z" />
             </svg>
             <span id="sosLabel"><?php echo $sosActive ? 'Deactivate SOS' : 'Press SOS'; ?></span>
         </button>
     </div>
 
-    <!-- GPS Buttons -->
+    <!-- locate & extra small controls -->
     <div class="gps-floating">
         <div class="loc-btn" id="zoomBtn" title="Zoom to my location">
-            <svg viewBox="0 0 24 24">
+            <svg viewBox="0 0 24 24" aria-hidden="true" focusable="false">
                 <path d="M12 2C8.13 2 5 5.13 5 9c0 5.25 7 12 7 12s7-6.75 7-12c0-3.87-3.13-7-7-7zM12 11.5A2.5 2.5 0 1 0 12 6.5 2.5 2.5 0 0 0 12 11.5z"></path>
             </svg>
         </div>
         <div class="loc-btn" id="centerBtn" title="Center map">
-            <svg viewBox="0 0 24 24">
+            <svg viewBox="0 0 24 24" aria-hidden="true" focusable="false">
                 <circle cx="12" cy="12" r="10" stroke-width="1.6" stroke="currentColor" fill="none"></circle>
                 <path d="M14 10l-4 1 1 4 3-5z" />
             </svg>
         </div>
     </div>
 
-    <audio id="sosSound" src="https://actions.google.com/sounds/v1/alarms/alarm_clock.ogg" preload="auto" loop></audio>
+    <!-- Chat toggle button -->
+    <button id="toggleChat" title="Toggle Chat">
+        <i id="chatIcon" class="bi bi-chat-dots-fill"></i>
+    </button>
 
-    <!-- Chat Panel -->
+    <!-- Chat container -->
     <div id="chatContainer">
-        <div id="chatHeader">Chat with Admin</div>
-        <div id="chatMessages"></div>
-        <div id="chatInputContainer">
-            <input type="text" id="chatInput" placeholder="Type a message...">
-            <button id="chatSendBtn">Send</button>
-        </div>
+        <iframe src="chat_user.php" style="width:100%; height:100%; border:none;"></iframe>
     </div>
 
+    <!-- SOS alert fallback audio -->
+    <audio id="sosSound" src="https://actions.google.com/sounds/v1/alarms/alarm_clock.ogg" preload="auto" loop></audio>
+
+    <script src="https://unpkg.com/leaflet/dist/leaflet.js"></script>
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
     <script>
+        const sosEndpoint = 'ajax_sos.php';
         let sosActive = <?php echo $sosActive ? 'true' : 'false'; ?>;
         let userLat = <?php echo json_encode($lastLat); ?>;
         let userLng = <?php echo json_encode($lastLng); ?>;
@@ -408,7 +375,7 @@ $sosActive = (int)$user['sos_active'];
             alarmOsc = null,
             alarmGain = null;
 
-        // MAP
+        /* --- MAP & USER MARKER --- */
         function initMap() {
             map = L.map('map', {
                 zoomControl: false
@@ -429,7 +396,10 @@ $sosActive = (int)$user['sos_active'];
         function userIcon(isSOS) {
             const fill = isSOS ? '#d32f2f' : '#2e7d32';
             const blinkClass = isSOS ? ' pulse-red' : '';
-            const html = `<div class="user-marker-svg${blinkClass}"><svg viewBox="0 0 24 24" width="44" height="44"><path class="pin-fill" d="M12 2C7.58 2 4 5.58 4 10c0 5.25 8 12 8 12s8-6.75 8-12c0-4.42-3.58-8-8-8z" fill="${fill}"></path><circle class="pin-center" cx="12" cy="10" r="2.6" fill="#fff"></circle></svg></div>`;
+            const html = `<div class="user-marker-svg${blinkClass}"><svg viewBox="0 0 24 24" width="44" height="44" xmlns="http://www.w3.org/2000/svg">
+        <path class="pin-fill" d="M12 2C7.58 2 4 5.58 4 10c0 5.25 8 12 8 12s8-6.75 8-12c0-4.42-3.58-8-8-8z" fill="${fill}"></path>
+        <circle class="pin-center" cx="12" cy="10" r="2.6" fill="#fff"></circle>
+    </svg></div>`;
             return L.divIcon({
                 className: '',
                 html,
@@ -446,15 +416,17 @@ $sosActive = (int)$user['sos_active'];
             trailPolyline.setStyle({
                 color: sosActive ? 'red' : 'green'
             });
+            const pathEl = trailPolyline._path;
+            if (pathEl) pathEl.classList.toggle('sos-trail', sosActive);
             if (userMarker) map.removeLayer(userMarker);
             userMarker = L.marker([lat, lng], {
                 icon: userIcon(sosActive)
             }).addTo(map);
-            userMarker.bindPopup(`<strong>You</strong><br>SOS: ${sosActive?'YES':'No'}`);
+            userMarker.bindPopup(`<strong>You</strong><br>SOS: ${sosActive ? 'YES' : 'No'}`);
             if (center) map.setView([lat, lng], 15);
         }
 
-        // GEO
+        /* --- GEOLOCATION --- */
         function geoSuccess(pos) {
             userLat = pos.coords.latitude;
             userLng = pos.coords.longitude;
@@ -467,14 +439,14 @@ $sosActive = (int)$user['sos_active'];
         }
 
         function sendLocation(lat, lng) {
-            $.post('ajax_sos.php', {
+            $.post(sosEndpoint, {
                 lat,
                 lng,
                 sos: sosActive ? 1 : 0
-            });
+            }, () => {}, 'json');
         }
 
-        // ALARM
+        /* --- ALARM --- */
         function startAlarm() {
             if (alarmPlaying) return;
             try {
@@ -516,9 +488,9 @@ $sosActive = (int)$user['sos_active'];
             alarmPlaying = false;
         }
 
-        // POLL SERVER
+        /* --- SERVER SOS POLL --- */
         function pollServerSOS() {
-            $.getJSON('ajax_sos.php?_=' + Date.now(), res => {
+            $.getJSON(sosEndpoint + '?_=' + Date.now(), function(res) {
                 if (!res || typeof res.sos_active === 'undefined') return;
                 const serverSos = !!Number(res.sos_active);
                 const forcedByAdmin = !!Number(res.forced_by_admin);
@@ -532,8 +504,9 @@ $sosActive = (int)$user['sos_active'];
             });
         }
 
-        $(document).ready(() => {
+        $(document).ready(function() {
             initMap();
+
             if (navigator.geolocation) {
                 navigator.geolocation.getCurrentPosition(geoSuccess, geoError, {
                     enableHighAccuracy: true,
@@ -545,15 +518,18 @@ $sosActive = (int)$user['sos_active'];
                 }), 2000);
             }
 
-            $('#sosBtn').on('click', () => {
+            // SOS button
+            $('#sosBtn').on('click', function() {
                 sosActive = !sosActive;
                 $('#sosLabel').text(sosActive ? 'Deactivate SOS' : 'Press SOS');
-                $('#sosBtn').css('transform', 'scale(0.98)');
-                setTimeout(() => $('#sosBtn').css('transform', ''), 160);
+                $(this).css('transform', 'scale(0.98)');
+                setTimeout(() => $(this).css('transform', ''), 160);
                 updateUserMarker(userLat, userLng);
                 sosActive ? startAlarm() : stopAlarm();
                 sendLocation(userLat, userLng);
             });
+
+            // Zoom & center
             $('#zoomBtn').on('click', () => {
                 map.setView([userLat, userLng], 16);
                 userMarker?.openPopup();
@@ -561,70 +537,28 @@ $sosActive = (int)$user['sos_active'];
             $('#centerBtn').on('click', () => {
                 map.setView([userLat, userLng], 15);
             });
+
+            // Poll SOS from server
             setInterval(pollServerSOS, 3000);
             $('#sosLabel').text(sosActive ? 'Deactivate SOS' : 'Press SOS');
             if (sosActive) startAlarm();
 
-            // CHAT
-            let chatVisible = true;
-            $('#chatHeader').on('click', () => $('#chatContainer').toggleClass('collapsed'));
-            const adminId = 1;
+            // Chat toggle
+            const chatContainer = $('#chatContainer');
+            const toggleBtn = $('#toggleChat');
+            const chatIcon = $('#chatIcon');
+            let chatOpen = true; // Chat visible initially
 
-            function fetchMessages() {
-                $.getJSON('ajax_fetch_messages.php', {
-                    other_id: adminId
-                }, res => {
-                    if (res.status === 'ok') {
-                        const chatMessages = $('#chatMessages').empty();
-                        res.messages.forEach(m => {
-                            const cls = m.sender_id == <?php echo $userId; ?> ? 'user' : 'admin';
-                            const html = `<div class="chatMsg ${cls}">
-                                <div style="font-size:0.85rem; font-weight:600; margin-bottom:2px;">
-                                    ${escapeHtml(m.sender_name)}
-                                </div>
-                                <div>${escapeHtml(m.message)}</div>
-                                <div style="font-size:0.75rem; color:#555; text-align:right;">${m.time}</div>
-                              </div>`;
-                            chatMessages.append(html);
-                        });
-                        $('#chatMessages').scrollTop($('#chatMessages')[0].scrollHeight);
-                    }
-                });
-            }
-
-            function escapeHtml(s) {
-                return String(s || '').replace(/[&<>"'\/]/g, function(c) {
-                    return {
-                        '&': '&amp;',
-                        '<': '&lt;',
-                        '>': '&gt;',
-                        '"': '&quot;',
-                        "'": '&#39;',
-                        '/': '&#x2F;'
-                    } [c];
-                });
-            }
-
-
-            function sendMessage() {
-                const msg = $('#chatInput').val().trim();
-                if (!msg) return;
-                $.post('ajax_send_message.php', {
-                    receiver_id: adminId,
-                    message: msg
-                }, res => {
-                    if (res.status === 'ok') {
-                        $('#chatInput').val('');
-                        fetchMessages();
-                    }
-                }, 'json');
-            }
-            $('#chatSendBtn').on('click', sendMessage);
-            $('#chatInput').on('keypress', e => {
-                if (e.key === 'Enter') sendMessage();
+            toggleBtn.on('click', () => {
+                chatOpen = !chatOpen;
+                if (chatOpen) {
+                    chatContainer.show();
+                    chatIcon.removeClass('bi-chat-dots').addClass('bi-chat-dots-fill'); // filled when open
+                } else {
+                    chatContainer.hide();
+                    chatIcon.removeClass('bi-chat-dots-fill').addClass('bi-chat-dots'); // outline when closed
+                }
             });
-            setInterval(fetchMessages, 2000);
-            fetchMessages();
         });
     </script>
 </body>
