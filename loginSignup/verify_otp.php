@@ -5,65 +5,225 @@ $success = false;
 $email = $_GET['email'] ?? ($_POST['email'] ?? '');
 
 if (!$email) {
-    header("Location: register.php");
-    exit;
+  header("Location: register.php");
+  exit;
 }
 
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
-    $otp = trim($_POST['otp'] ?? '');
-    if (!preg_match('/^\d{6}$/', $otp)) {
-        $errors[] = "Enter a 6-digit code.";
+  $otp = trim($_POST['otp'] ?? '');
+  if (!preg_match('/^\d{6}$/', $otp)) {
+    $errors[] = "Enter a 6-digit code.";
+  } else {
+    $db = pdo();
+    $stmt = $db->prepare("SELECT id, otp_code, otp_expires, is_verified FROM users WHERE email = :email LIMIT 1");
+    $stmt->bindParam(':email', $email);
+    $stmt->execute();
+    $user = $stmt->fetch();
+    if (!$user) {
+      $errors[] = "Account not found.";
+    } elseif ($user['is_verified']) {
+      $errors[] = "Account is already verified. You can log in.";
     } else {
-        $db = pdo();
-        $stmt = $db->prepare("SELECT id, otp_code, otp_expires, is_verified FROM users WHERE email = :email LIMIT 1");
-        $stmt->bindParam(':email', $email);
-        $stmt->execute();
-        $user = $stmt->fetch();
-        if (!$user) {
-            $errors[] = "Account not found.";
-        } elseif ($user['is_verified']) {
-            $errors[] = "Account is already verified. You can log in.";
-        } else {
-            $now = new DateTime();
-            $expires = new DateTime($user['otp_expires'] ?? '1970-01-01');
-            if ($now > $expires) {
-                $errors[] = "OTP expired. Request a new one.";
-            } elseif (!hash_equals((string)$user['otp_code'], $otp)) {
-                $errors[] = "Invalid code.";
-            } else {
-                $update = $db->prepare("UPDATE users SET is_verified = 1, otp_code = NULL, otp_expires = NULL WHERE id = :id");
-                $update->bindParam(':id', $user['id'], PDO::PARAM_INT);
-                $update->execute();
-                $success = true;
-            }
-        }
+      $now = new DateTime();
+      $expires = new DateTime($user['otp_expires'] ?? '1970-01-01');
+      if ($now > $expires) {
+        $errors[] = "OTP expired. Request a new one.";
+      } elseif (!hash_equals((string)$user['otp_code'], $otp)) {
+        $errors[] = "Invalid code.";
+      } else {
+        $update = $db->prepare("UPDATE users SET is_verified = 1, otp_code = NULL, otp_expires = NULL WHERE id = :id");
+        $update->bindParam(':id', $user['id'], PDO::PARAM_INT);
+        $update->execute();
+        $success = true;
+      }
     }
+  }
 }
 ?>
 <!doctype html>
-<html>
+<html lang="en">
+
 <head>
-<meta charset="utf-8">
-<title>Verify OTP | BSU Auth</title>
-<link rel="stylesheet" href="styles.css">
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Verify OTP | CICS Alerts System</title>
+
+  <!-- Tailwind + Bootstrap -->
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
+
+  <style>
+    body {
+      background-image: url("../img/bg.png");
+      font-family: 'Poppins', sans-serif;
+      background-size: cover;
+      background-position: center;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      height: 100vh;
+      margin: 0;
+    }
+
+    .container-box {
+      display: flex;
+      flex-direction: row;
+      justify-content: center;
+      align-items: stretch;
+      background: #fff;
+      border-radius: 1.5rem;
+      overflow: hidden;
+      box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
+      max-width: 900px;
+      width: 90%;
+    }
+
+    .left-panel,
+    .right-panel {
+      flex: 1;
+      padding: 3rem;
+    }
+
+    /* Left (White Panel) */
+    .left-panel {
+      background-color: #fff;
+    }
+
+    /* Right (Red Panel) */
+    .right-panel {
+      background-color: #b91c1c;
+      color: white;
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      align-items: center;
+      border-top-right-radius: 1.5rem;
+      border-bottom-right-radius: 1.5rem;
+      text-align: center;
+    }
+
+    .right-panel h2 {
+      font-size: 1.8rem;
+      font-weight: bold;
+    }
+
+    .right-panel p {
+      color: #ffe6e6;
+      margin-bottom: 1.5rem;
+      font-size: 1rem;
+      line-height: 1.5;
+    }
+
+    .sign-btn {
+      background-color: #b91c1c;
+      color: white;
+      border-radius: 9999px;
+      width: 100%;
+      padding: 0.75rem;
+      font-weight: 600;
+      border: none;
+      transition: all 0.3s ease;
+    }
+
+    .sign-btn:hover {
+      background-color: #dc2626;
+    }
+
+    .form-control {
+      border-radius: 9999px;
+      padding: 0.75rem 1rem;
+    }
+
+    .top-link {
+      display: inline-block;
+      margin-top: 1rem;
+      color: #b91c1c;
+      font-weight: 500;
+      text-decoration: none;
+    }
+
+    .top-link:hover {
+      text-decoration: underline;
+    }
+
+    .logo {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      margin-bottom: 1.5rem;
+    }
+
+    .logo img {
+      width: 70px;
+      height: 70px;
+      margin-right: 10px;
+    }
+
+    .alert {
+      border-radius: 1rem;
+    }
+
+    @media (max-width: 768px) {
+      .container-box {
+        flex-direction: column;
+        max-width: 95%;
+      }
+
+      .right-panel {
+        border-top-left-radius: 0;
+        border-bottom-left-radius: 1.5rem;
+      }
+    }
+  </style>
 </head>
+
 <body>
-<div class="container">
-  <div class="header"><div class="logo">BSU</div><h1>Enter verification code</h1></div>
-  <?php if ($success): ?>
-    <div class="success">Account verified successfully. <a href="login.php">Log in now</a></div>
-  <?php else: ?>
-    <?php if (!empty($errors)): ?><div class="error"><?php echo htmlspecialchars(implode("<br>", $errors)); ?></div><?php endif; ?>
-    <form method="post">
-      <input type="hidden" name="email" value="<?php echo htmlspecialchars($email); ?>">
-      <div class="form-group">
-        <label>6-digit code sent to your phone</label>
-        <input type="text" name="otp" maxlength="6" value="<?php echo htmlspecialchars($_POST['otp'] ?? ''); ?>" required>
-      </div>
-      <button type="submit">Verify</button>
-    </form>
-    <div class="small">Didn't receive SMS? <a href="resend_otp.php?email=<?php echo urlencode($email); ?>">Resend code</a></div>
-  <?php endif; ?>
-</div>
+
+  <div class="container-box">
+
+    <!-- Left Panel: Verify OTP Form -->
+    <div class="left-panel">
+      <h2 class="text-2xl font-bold mb-4 text-red-700">Verify Your Account</h2>
+
+      <?php if ($success): ?>
+        <div class="alert alert-success">
+          Account verified successfully.
+          <a href="login.php" class="fw-semibold text-red-700 text-decoration-none">Log in now</a>
+        </div>
+      <?php else: ?>
+        <?php if (!empty($errors)): ?>
+          <div class="alert alert-danger"><?php echo htmlspecialchars(implode("<br>", $errors)); ?></div>
+        <?php endif; ?>
+
+        <form method="post" class="space-y-4">
+          <input type="hidden" name="email" value="<?php echo htmlspecialchars($email); ?>">
+
+          <div>
+            <label class="block font-medium text-gray-700">6-digit code sent to your phone</label>
+            <input type="text" name="otp" maxlength="6" class="form-control" value="<?php echo htmlspecialchars($_POST['otp'] ?? ''); ?>" required>
+          </div>
+
+          <button type="submit" class="sign-btn">Verify</button>
+        </form>
+
+        <div class="small mt-3">
+          Didn't receive SMS?
+          <a href="resend_otp.php?email=<?php echo urlencode($email); ?>" class="text-red-700 fw-semibold text-decoration-none">Resend code</a>
+        </div>
+
+        <a href="register.php" class="top-link d-block">← Back to Register</a>
+      <?php endif; ?>
+    </div>
+
+    <!-- Right Panel: Info / Catchy Message -->
+    <div class="right-panel">
+      <img src="../img/bsu.png" alt="CICS Logo" class="mb-4 w-24 h-24">
+      <h2>Verify & Stay Safe!</h2>
+      <p>Enter your 6-digit code to activate your <strong>CICS Emergency & Important Alerts</strong> account. Stay informed. Stay protected.</p>
+    </div>
+
+  </div>
+
 </body>
+
 </html>

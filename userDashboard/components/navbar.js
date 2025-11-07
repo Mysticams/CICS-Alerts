@@ -152,7 +152,7 @@ class CustomNavbar extends HTMLElement {
 
       <nav>
         <div class="logo">
-          <img src="../bsu.png" alt="CICS Logo" class="logo-img" />
+          <img src="../img/bsu.png" alt="CICS Logo" class="logo-img" />
           <span>CICS Emergency & Important Alerts</span>
         </div>
 
