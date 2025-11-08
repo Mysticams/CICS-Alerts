@@ -29,7 +29,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         $_SESSION['user_role'] = 'admin';
         $_SESSION['logged_in'] = true;
         session_regenerate_id(true);
-        header("Location: ../sos/admin.php"); // admin dashboard
+        header("Location: ../adminDashboard/index.php"); // admin dashboard
         exit;
       } else {
         $errors[] = "Invalid admin credentials.";
@@ -56,7 +56,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             $_SESSION['user_role'] = $user['role'];
             $_SESSION['logged_in'] = true;
             session_regenerate_id(true);
-            header("Location: ../sos/user.php");
+            header("Location: ../userDashboard/index.php");
             exit;
           }
         }

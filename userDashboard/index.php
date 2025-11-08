@@ -1,37 +1,55 @@
 <?php
 require_once '../config.php';
 
-// Ensure session is set and valid
-if (!isset($_SESSION['logged_in']) || !$_SESSION['logged_in'] || !isset($_SESSION['user_id'])) {
+// Start session safely
+if (session_status() === PHP_SESSION_NONE) {
+    session_start();
+}
+
+// Redirect if user not logged in
+if (!isset($_SESSION['user_id'])) {
     header("Location: ../loginSignup/login.php");
     exit;
 }
 
-$db = pdo();
-$stmt = $db->prepare("SELECT first_name, last_name, email, role FROM users WHERE id = :id LIMIT 1");
-$stmt->bindParam(':id', $_SESSION['user_id'], PDO::PARAM_INT);
-$stmt->execute();
-$user = $stmt->fetch();
+$pdo = pdo(); // Ensure PDO exists
 
-if (!$user) {
-    session_unset();
-    session_destroy();
-    header("Location: ../loginSignup/login.php");
-    exit;
+// Fetch user info from database
+try {
+    $stmt = $pdo->prepare("SELECT first_name, last_name, email, role FROM users WHERE id = ?");
+    $stmt->execute([$_SESSION['user_id']]);
+    $user = $stmt->fetch(PDO::FETCH_ASSOC);
+
+    if (!$user) {
+        session_destroy();
+        header("Location: ../loginSignup/login.php");
+        exit;
+    }
+
+    $user_name  = htmlspecialchars($user['first_name'] . ' ' . $user['last_name']);
+    $user_email = htmlspecialchars($user['email']);
+    $user_role  = htmlspecialchars($user['role']);
+} catch (PDOException $e) {
+    die("Error fetching user data: " . $e->getMessage());
 }
 
-// Define user variables from database
-$user_name  = htmlspecialchars($user['first_name'] . ' ' . $user['last_name']);
-$user_email = htmlspecialchars($user['email']);
-$user_role  = htmlspecialchars($user['role']);
+// Fetch alert counts
+try {
+    $totalAlerts = $pdo->query("SELECT COUNT(*) FROM alerts")->fetchColumn() ?? 0;
+    $pendingAlerts = $pdo->query("SELECT COUNT(*) FROM alerts WHERE status='pending'")->fetchColumn() ?? 0;
+    $acknowledgedAlerts = $pdo->query("SELECT COUNT(*) FROM alerts WHERE status='acknowledged'")->fetchColumn() ?? 0;
+} catch (PDOException $e) {
+    $totalAlerts = $pendingAlerts = $acknowledgedAlerts = 0;
+}
 ?>
+
 <!DOCTYPE html>
 <html lang="en">
 <head>
-<meta charset="UTF-8" />
-<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>CICS AlertSOS | Dashboard</title>
-<link rel="stylesheet" href="style.css" />
+<link rel="stylesheet" href="style.css">
 <script src="https://cdn.tailwindcss.com"></script>
 <script src="https://unpkg.com/feather-icons"></script>
 
@@ -59,9 +77,8 @@ main { flex: 1; margin-left: 16rem; margin-top: 4rem; padding: 2rem; transition:
 </head>
 <body>
 
-<!-- Navbar -->
+<!-- Navbar & Sidebar -->
 <custom-navbar class="relative z-50"></custom-navbar>
-<!-- Sidebar -->
 <custom-sidebar class="relative z-40"></custom-sidebar>
 
 <!-- Main Content -->
@@ -75,32 +92,35 @@ main { flex: 1; margin-left: 16rem; margin-top: 4rem; padding: 2rem; transition:
   </div>
 
   <!-- Welcome Section -->
-  <section class="bg-white rounded-xl shadow-md p-4 sm:p-6 mb-8">
+  <section class="bg-white rounded-xl shadow-md p-6 mb-8">
     <div class="flex flex-col lg:flex-row justify-between items-start lg:items-center flex-wrap gap-4">
       <div>
-        <h1 class="text-2xl font-bold text-gray-800">
-          Welcome back, <span class="text-primary"><?= $user_name ?></span>
+        <h1 class="text-3xl font-extrabold text-gray-800 mb-2">
+          Welcome back, <span class="text-primary"><?= $user_name ?></span>!
         </h1>
-        <p class="text-gray-600"><?= $user_role ?> | <?= $user_email ?></p>
+        <p class="text-gray-600 text-lg">
+          <?= $user_role ?> | <?= $user_email ?>
+        </p>
       </div>
-      <div class="flex flex-wrap gap-4">
+      <div class="flex flex-wrap gap-4 mt-4 lg:mt-0">
+        <!-- Dashboard Overview Cards -->
         <div class="bg-secondary px-6 py-4 rounded-lg text-center flex-1 min-w-[120px]">
-          <p class="text-sm text-gray-600">Alerts Received</p>
-          <p class="text-2xl font-bold text-primary">24</p>
+          <p class="text-sm text-gray-600">Total Alerts</p>
+          <p class="text-2xl font-bold text-primary"><?= $totalAlerts ?></p>
         </div>
         <div class="bg-secondary px-6 py-4 rounded-lg text-center flex-1 min-w-[120px]">
-          <p class="text-sm text-gray-600">Acknowledged</p>
-          <p class="text-2xl font-bold text-primary">18</p>
+          <p class="text-sm text-gray-600">Pending Alerts</p>
+          <p class="text-2xl font-bold text-primary"><?= $pendingAlerts ?></p>
         </div>
         <div class="bg-secondary px-6 py-4 rounded-lg text-center flex-1 min-w-[120px]">
-          <p class="text-sm text-gray-600">Active SOS</p>
-          <p class="text-2xl font-bold text-primary">0</p>
+          <p class="text-sm text-gray-600">Acknowledged Alerts</p>
+          <p class="text-2xl font-bold text-primary"><?= $acknowledgedAlerts ?></p>
         </div>
       </div>
     </div>
   </section>
 
-  <!-- Notification & Filter Panel -->
+  <!-- Notifications Section -->
   <section class="bg-white rounded-xl shadow-md p-4 sm:p-6 mb-8">
     <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-4 gap-2 sm:gap-0">
       <h2 class="text-xl font-bold text-gray-800 flex items-center gap-2">
@@ -115,6 +135,7 @@ main { flex: 1; margin-left: 16rem; margin-top: 4rem; padding: 2rem; transition:
     </div>
 
     <div id="alertsList" class="space-y-4">
+      <!-- Example alerts -->
       <div class="alert-card border-l-4 border-primary bg-secondary p-4 rounded-r-lg" data-priority="high">
         <div class="flex justify-between items-start flex-wrap gap-2">
           <div>
@@ -124,7 +145,6 @@ main { flex: 1; margin-left: 16rem; margin-top: 4rem; padding: 2rem; transition:
           <span class="text-sm text-gray-500">10 min ago</span>
         </div>
       </div>
-
       <div class="alert-card border-l-4 border-yellow-500 bg-yellow-100 p-4 rounded-r-lg" data-priority="medium">
         <div class="flex justify-between items-start flex-wrap gap-2">
           <div>
@@ -134,7 +154,6 @@ main { flex: 1; margin-left: 16rem; margin-top: 4rem; padding: 2rem; transition:
           <span class="text-sm text-gray-500">2 hours ago</span>
         </div>
       </div>
-
       <div class="alert-card border-l-4 border-green-500 bg-green-100 p-4 rounded-r-lg" data-priority="low">
         <div class="flex justify-between items-start flex-wrap gap-2">
           <div>
@@ -148,6 +167,7 @@ main { flex: 1; margin-left: 16rem; margin-top: 4rem; padding: 2rem; transition:
   </section>
 </main>
 
+<!-- SOS Button -->
 <button id="sosBtn" aria-label="Send SOS" class="bg-primary hover:bg-red-700 text-white rounded-full p-6 shadow-lg transform transition hover:scale-110">
   <i data-feather="alert-triangle" class="w-8 h-8"></i>
 </button>
@@ -159,7 +179,9 @@ main { flex: 1; margin-left: 16rem; margin-top: 4rem; padding: 2rem; transition:
 feather.replace();
 
 // Current date
-document.getElementById('dateText').textContent = new Date().toLocaleDateString('en-US', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' });
+document.getElementById('dateText').textContent = new Date().toLocaleDateString('en-US', {
+  weekday: 'long', year: 'numeric', month: 'long', day: 'numeric'
+});
 
 // SOS button
 document.getElementById('sosBtn').addEventListener('click', () => {
@@ -181,7 +203,7 @@ document.getElementById('alertFilter').addEventListener('change', function() {
   });
 });
 
-// Sidebar toggle (if navbarToggle exists)
+// Sidebar toggle
 const toggleBtn = document.getElementById('navbarToggle');
 const sidebar = document.querySelector('custom-sidebar');
 if(toggleBtn && sidebar) {
