@@ -3,7 +3,7 @@ class CustomSidebar extends HTMLElement {
     this.attachShadow({ mode: 'open' });
     this.shadowRoot.innerHTML = `
       <style>
-        /* ===== Overlay (mobile background dim) ===== */
+        /* ===== Overlay ===== */
         .overlay {
           position: fixed;
           top: 0;
@@ -21,16 +21,16 @@ class CustomSidebar extends HTMLElement {
           visibility: visible;
         }
 
-        /* ===== Sidebar container ===== */
+        /* ===== Sidebar ===== */
         aside {
-          background-color: #B91C1C; /* Main red background */
+          background-color: #B91C1C;
           width: 240px;
           height: 100vh;
           position: fixed;
-          top: 60px; /* aligns below navbar */
+          top: 60px;
           left: 0;
           box-shadow: 2px 0 6px rgba(0, 0, 0, 0.2);
-          color: #F9FAFB; /* White text */
+          color: #F9FAFB;
           transform: translateX(0);
           transition: transform 0.3s ease-in-out;
           z-index: 950;
@@ -39,7 +39,6 @@ class CustomSidebar extends HTMLElement {
           overflow-y: auto;
         }
 
-        /* ===== Mobile behavior ===== */
         @media (max-width: 768px) {
           aside {
             transform: translateX(-100%);
@@ -49,7 +48,7 @@ class CustomSidebar extends HTMLElement {
           }
         }
 
-        /* ===== Sidebar menu styling ===== */
+        /* ===== Menu Styling ===== */
         .sidebar-menu {
           display: flex;
           flex-direction: column;
@@ -62,27 +61,37 @@ class CustomSidebar extends HTMLElement {
           align-items: center;
           gap: 0.75rem;
           padding: 0.75rem 1.5rem;
-          color: #F9FAFB; /* White text */
+          color: #F9FAFB;
           text-decoration: none;
           font-weight: 500;
           transition: all 0.2s ease;
         }
 
         .menu-item:hover {
-          background-color: #DC2626; /* Slightly lighter red */
-          color: #FFFFFF;
+          background-color: #DC2626;
         }
 
+        /* ===== Active Menu ===== */
         .menu-item.active {
-          background-color: #7F1D1D; /* Darker red for active state */
-          color: #FFFFFF;
-          border-left: 4px solid #FEE2E2; /* Soft pink highlight */
+          background-color: #7F1D1D;
+          border-left: 4px solid #FCA5A5;
+          color: #ffffffff;
           font-weight: 600;
         }
 
-        /* Hover only for non-active items */
         .menu-item.active:hover {
           background-color: #7F1D1D;
+        }
+
+        /* ===== Icon Styles ===== */
+        svg {
+          stroke: #F9FAFB;
+          flex-shrink: 0;
+          transition: stroke 0.2s ease;
+        }
+
+        .menu-item.active svg {
+          stroke: #FCA5A5;
         }
 
         .menu-divider {
@@ -91,18 +100,10 @@ class CustomSidebar extends HTMLElement {
           margin: 0.75rem 1.5rem;
         }
 
-        /* Logout at bottom */
-        .menu-item.logout {
-          margin-top: 10rem;
+         .menu-item.logout {
+          margin-top: 11rem;
         }
 
-        /* ===== Feather icons ===== */
-        i {
-          stroke: currentColor;
-          flex-shrink: 0;
-        }
-
-        /* ===== Scrollbar ===== */
         aside::-webkit-scrollbar {
           width: 6px;
         }
@@ -119,40 +120,56 @@ class CustomSidebar extends HTMLElement {
 
       <aside id="sidebar">
         <div class="sidebar-menu">
-          <a href="index.php" class="menu-item active"><i data-feather="home"></i><span>Dashboard</span></a>
+          <a href="index.php" class="menu-item"><i data-feather="home"></i><span>Dashboard</span></a>
           <a href="sendAlert.html" class="menu-item"><i data-feather="send"></i><span>Send Alert</span></a>
           <a href="trackingAcknowledgement.html" class="menu-item"><i data-feather="check-square"></i><span>Acknowledgment</span></a>
           <a href="sosMonitoring.html" class="menu-item"><i data-feather="alert-circle"></i><span>SOS Monitoring</span></a>
           <a href="incidentReport.php" class="menu-item"><i data-feather="file-text"></i><span>Incident Report</span></a>
-          <a href="analytics.html" class="menu-item"><i data-feather="bar-chart-2"></i></i><span>Analytics</span></a>
+          <a href="analytics.html" class="menu-item"><i data-feather="bar-chart-2"></i><span>Analytics</span></a>
           <a href="activityLogs.html" class="menu-item"><i data-feather="layers"></i><span>Activity Logs</span></a>
-          <a href="admin_hotlines.html" class="menu-item"><i data-feather="phone-call"></i><span>Emergency Hotlines</span></a>
-          <a href="settings.html" class="menu-item"><i data-feather="settings"></i><span>Settings</span></a>
+          <a href="admin_hotlines.php" class="menu-item"><i data-feather="phone-call"></i><span>Emergency Hotlines</span></a>
+          <a href="settings.php" class="menu-item"><i data-feather="settings"></i><span>Settings</span></a>
 
           <div class="menu-divider"></div>
 
-          <a href="#" class="menu-item logout"><i data-feather="log-out"></i><span>Logout</span></a>
+          <a href="../loginSignup/logout.php" class="menu-item logout"><i data-feather="log-out"></i><span>Logout</span></a>
         </div>
       </aside>
     `;
 
-    // Elements
     const overlay = this.shadowRoot.querySelector('.overlay');
     const aside = this.shadowRoot.querySelector('aside');
+    const menuItems = this.shadowRoot.querySelectorAll('.menu-item');
 
-    // Load Feather icons in white
+    // Load Feather icons
     this.shadowRoot.querySelectorAll('i').forEach(icon => {
       const name = icon.getAttribute('data-feather');
-      icon.outerHTML = feather.icons[name].toSvg({ width: 18, height: 18, color: "#F9FAFB" });
+      icon.outerHTML = feather.icons[name].toSvg({ width: 18, height: 18 });
     });
 
-    // Toggle sidebar visibility (from navbar toggle)
+    // Highlight the current page automatically
+    const currentPath = window.location.pathname.split("/").pop();
+    menuItems.forEach(link => {
+      const linkPath = link.getAttribute('href');
+      if (linkPath === currentPath) {
+        link.classList.add('active');
+      }
+    });
+
+    // === New: Dynamic click highlight ===
+    menuItems.forEach(link => {
+      link.addEventListener('click', () => {
+        menuItems.forEach(item => item.classList.remove('active'));
+        link.classList.add('active');
+      });
+    });
+
+    // Sidebar toggle (for mobile)
     window.addEventListener('toggle-sidebar', () => {
       aside.classList.toggle('open');
       overlay.classList.toggle('show');
     });
 
-    // Hide sidebar when overlay is clicked
     overlay.addEventListener('click', () => {
       aside.classList.remove('open');
       overlay.classList.remove('show');

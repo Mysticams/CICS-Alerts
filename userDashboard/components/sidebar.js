@@ -87,8 +87,8 @@ class CustomSidebar extends HTMLElement {
           <a href="sos.html" class="menu-item"><i data-feather="alert-circle"></i><span>SOS Button</span></a>
           <a href="userAck.html" class="menu-item"><i data-feather="message-circle"></i><span>Announcements</span></a>
           <a href="incidentReport.php" class="menu-item"><i data-feather="file-text"></i><span>Incident Report</span></a>
-          <a href="user_hotlines.html" class="menu-item"><i data-feather="phone-call"></i><span>Emergency Hotlines</span></a>
-          <a href="settings.html" class="menu-item"><i data-feather="settings"></i><span>Settings</span></a>
+          <a href="user_hotlines.php" class="menu-item"><i data-feather="phone-call"></i><span>Emergency Hotlines</span></a>
+          <a href="settings.php" class="menu-item"><i data-feather="settings"></i><span>Settings</span></a>
           <div class="menu-divider"></div>
           <a href="../loginSignup/logout.php" class="menu-item logout"><i data-feather="log-out"></i><span>Logout</span></a>
         </div>
