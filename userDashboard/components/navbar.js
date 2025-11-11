@@ -1,13 +1,8 @@
 class CustomNavbar extends HTMLElement {
-    connectedCallback() {
-        this.attachShadow({ mode: "open" });
-
-        // Get user info from global variable
-        const user = window.currentUser || { firstName: "John", lastName: "Doe", profilePic: null };
-        const initials = (user.firstName[0] + user.lastName[0]).toUpperCase();
-
-        this.shadowRoot.innerHTML = `
-            <style>
+  connectedCallback() {
+    this.attachShadow({ mode: "open" });
+    this.shadowRoot.innerHTML = `
+      <style>
         nav {
           background-color: white;
           padding: 0.75rem 1.5rem;
@@ -155,69 +150,76 @@ class CustomNavbar extends HTMLElement {
         }
       </style>
 
-            <nav>
-                <div class="logo">
-                    <img src="../img/bsu.png" alt="CICS Logo" class="logo-img" />
-                    <span>CICS Emergency & Important Alerts</span>
-                </div>
+      <nav>
+        <div class="logo">
+          <img src="../img/bsu.png" alt="CICS Logo" class="logo-img" />
+          <span>CICS Emergency & Important Alerts</span>
+        </div>
 
-                <div class="user-menu">
-                    <span class="user-name">${user.firstName} ${user.lastName}</span>
-                    <div class="user-avatar" id="avatarBtn">
-                        ${user.profilePic ? `<img src="${user.profilePic}" class="w-full h-full object-cover rounded-full">` : initials}
-                    </div>
-                    <div class="notification-bell">
-                        <a href="alerts.html" aria-label="View alerts">
-                            <svg xmlns="http://www.w3.org/2000/svg" fill="none" stroke="currentColor"
-                                stroke-width="2" stroke-linecap="round" stroke-linejoin="round"
-                                viewBox="0 0 24 24">
-                                <path d="M18 8a6 6 0 0 0-12 0c0 7-3 9-3 9h18s-3-2-3-9"></path>
-                                <path d="M13.73 21a2 2 0 0 1-3.46 0"></path>
-                            </svg>
-                        </a>
-                    </div>
-                    <button id="mobile-menu-button" class="mobile-menu-button" aria-label="Toggle menu">
-                        <svg xmlns="http://www.w3.org/2000/svg" fill="none" stroke="currentColor" stroke-width="2"
-                             stroke-linecap="round" stroke-linejoin="round" viewBox="0 0 24 24">
-                          <line x1="3" y1="6" x2="21" y2="6"></line>
-                          <line x1="3" y1="12" x2="21" y2="12"></line>
-                          <line x1="3" y1="18" x2="21" y2="18"></line>
-                        </svg>
-                    </button>
-                    <div class="dropdown-menu" id="dropdownMenu">
-                        <a href="profile.php" class="dropdown-item">Profile</a>
-                        <a href="index.php" class="dropdown-item" id="logoutBtn">Logout</a>
-                    </div>
-                </div>
-            </nav>
-        `;
+        <div class="user-menu">
+          <span class="user-name">John Doe</span>
 
-        const shadow = this.shadowRoot;
-        const avatarBtn = shadow.querySelector("#avatarBtn");
-        const dropdownMenu = shadow.querySelector("#dropdownMenu");
-        const mobileMenuButton = shadow.querySelector("#mobile-menu-button");
+          <div class="user-avatar" id="avatarBtn">JD</div>
 
-        mobileMenuButton.addEventListener("click", () => window.dispatchEvent(new CustomEvent("toggle-sidebar")));
-        avatarBtn.addEventListener("click", e => { e.stopPropagation(); dropdownMenu.classList.toggle("show"); });
-        document.addEventListener("click", e => { if(!shadow.contains(e.target)) dropdownMenu.classList.remove("show"); });
+          <div class="notification-bell">
+            <a href="alerts.html" aria-label="View alerts">
+              <svg xmlns="http://www.w3.org/2000/svg" fill="none" stroke="currentColor"
+                   stroke-width="2" stroke-linecap="round" stroke-linejoin="round"
+                   viewBox="0 0 24 24">
+                <path d="M18 8a6 6 0 0 0-12 0c0 7-3 9-3 9h18s-3-2-3-9"></path>
+                <path d="M13.73 21a2 2 0 0 1-3.46 0"></path>
+              </svg>
+            </a>
+          </div>
 
-        shadow.querySelector("#logoutBtn").addEventListener("click", () => {
-            localStorage.removeItem("currentUser");
-            window.location.href = "login.php";
-        });
+          <button id="mobile-menu-button" class="mobile-menu-button" aria-label="Toggle menu">
+            <svg xmlns="http://www.w3.org/2000/svg" fill="none" stroke="currentColor" stroke-width="2"
+                 stroke-linecap="round" stroke-linejoin="round" viewBox="0 0 24 24">
+              <line x1="3" y1="6" x2="21" y2="6"></line>
+              <line x1="3" y1="12" x2="21" y2="12"></line>
+              <line x1="3" y1="18" x2="21" y2="18"></line>
+            </svg>
+          </button>
 
-        // **Expose a method to update navbar dynamically**
-        this.updateNavbar = ({firstName, lastName, profilePic}) => {
-            const nameEl = shadow.querySelector(".user-name");
-            const avatarEl = shadow.querySelector("#avatarBtn");
-            nameEl.textContent = `${firstName} ${lastName}`;
-            if(profilePic){
-                avatarEl.innerHTML = `<img src="${profilePic}" class="w-full h-full object-cover rounded-full">`;
-            } else {
-                avatarEl.textContent = (firstName[0]+lastName[0]).toUpperCase();
-            }
-        };
-    }
+          <!-- Dropdown -->
+          <div class="dropdown-menu" id="dropdownMenu">
+            <a href="settings.php" class="dropdown-item">Profile</a>
+            <a href="../loginSignup/logout.php" class="dropdown-item" id="logoutBtn">Logout</a>
+          </div>
+        </div>
+      </nav>
+    `;
+
+    const shadow = this.shadowRoot;
+    const avatarBtn = shadow.querySelector("#avatarBtn");
+    const dropdownMenu = shadow.querySelector("#dropdownMenu");
+    const mobileMenuButton = shadow.querySelector("#mobile-menu-button");
+
+    // Toggle sidebar on mobile
+    mobileMenuButton.addEventListener("click", () => {
+      window.dispatchEvent(new CustomEvent("toggle-sidebar"));
+    });
+
+    // Toggle dropdown on avatar click
+    avatarBtn.addEventListener("click", (e) => {
+      e.stopPropagation();
+      dropdownMenu.classList.toggle("show");
+    });
+
+    // Close dropdown when clicking outside
+    document.addEventListener("click", (e) => {
+      if (!shadow.contains(e.target)) {
+        dropdownMenu.classList.remove("show");
+      }
+    });
+
+    // Logout handler (optional demo)
+    shadow.querySelector("#logoutBtn").addEventListener("click", () => {
+      localStorage.removeItem("currentUser");
+      alert("Logged out successfully!");
+      window.location.href = "login.html";
+    });
+  }
 }
 
 customElements.define("custom-navbar", CustomNavbar);

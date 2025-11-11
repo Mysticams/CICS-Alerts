@@ -1,35 +1,63 @@
 <?php
-require_once '../config.php';
-session_start();
-header('Content-Type: application/json');
+if (session_status() === PHP_SESSION_NONE) session_start();
 
-if (!isset($_SESSION['user_id']) || $_SESSION['user_role'] !== 'admin') {
-    http_response_code(403);
-    echo json_encode(['error'=>'Unauthorized']);
+// Only allow admin
+if (!isset($_SESSION['user_role']) || $_SESSION['user_role'] !== 'admin') {
+    echo json_encode(['success' => false, 'message' => 'Unauthorized']);
     exit;
 }
 
-$data = json_decode(file_get_contents('php://input'), true);
-if (!$data) { http_response_code(400); echo json_encode(['error'=>'Invalid input']); exit; }
+// Path to settings file
+$settingsFile = __DIR__ . '/admin_settings.json';
+$admin = file_exists($settingsFile) ? json_decode(file_get_contents($settingsFile), true) : [];
 
-$pdo = pdo();
-$update_fields = [
-    'first_name'=>$data['first_name'],
-    'last_name'=>$data['last_name'],
-    'email'=>$data['email'],
-    'id'=>$_SESSION['user_id']
+// Sanitize POST data
+$first_name = isset($_POST['first_name']) ? trim($_POST['first_name']) : ($admin['first_name'] ?? 'System');
+$last_name = isset($_POST['last_name']) ? trim($_POST['last_name']) : ($admin['last_name'] ?? 'Administrator');
+$email = isset($_POST['email']) ? trim($_POST['email']) : ($admin['email'] ?? 'admin@g.batstate-u.edu.ph');
+$dark_mode = isset($_POST['dark_mode']) ? intval($_POST['dark_mode']) : ($admin['dark_mode'] ?? 0);
+$allow_notifications = isset($_POST['allow_notifications']) ? intval($_POST['allow_notifications']) : ($admin['allow_notifications'] ?? 1);
+$show_system_logs = isset($_POST['show_system_logs']) ? intval($_POST['show_system_logs']) : ($admin['show_system_logs'] ?? 0);
+$maintenance_mode = isset($_POST['maintenance_mode']) ? intval($_POST['maintenance_mode']) : ($admin['maintenance_mode'] ?? 0);
+
+// Handle profile picture upload
+$profile_pic = $admin['profile_pic'] ?? null;
+
+if (isset($_FILES['profilePic']) && $_FILES['profilePic']['error'] === UPLOAD_ERR_OK) {
+    $uploadDir = __DIR__ . '/uploads/';
+    if (!is_dir($uploadDir)) mkdir($uploadDir, 0755, true);
+
+    $fileTmp = $_FILES['profilePic']['tmp_name'];
+    $fileExt = pathinfo($_FILES['profilePic']['name'], PATHINFO_EXTENSION);
+    $fileName = 'profile_' . time() . '.' . $fileExt;
+    $destPath = $uploadDir . $fileName;
+
+    if (move_uploaded_file($fileTmp, $destPath)) {
+        $profile_pic = $fileName;
+    }
+}
+
+// Save settings
+$adminSettings = [
+    'first_name' => $first_name,
+    'last_name' => $last_name,
+    'email' => $email,
+    'dark_mode' => $dark_mode,
+    'allow_notifications' => $allow_notifications,
+    'show_system_logs' => $show_system_logs,
+    'maintenance_mode' => $maintenance_mode,
+    'profile_pic' => $profile_pic
 ];
 
-$sql = "UPDATE users SET first_name=:first_name, last_name=:last_name, email=:email";
-if(!empty($data['password'])){
-    $hash_data = make_password_hash($data['password']);
-    $sql .= ", password_hash=:password_hash, password_salt=:password_salt";
-    $update_fields['password_hash']=$hash_data['hash'];
-    $update_fields['password_salt']=$hash_data['salt'];
+if (file_put_contents($settingsFile, json_encode($adminSettings, JSON_PRETTY_PRINT))) {
+    echo json_encode([
+        'success' => true,
+        'message' => 'Settings saved successfully!',
+        'profile_pic' => $profile_pic
+    ]);
+} else {
+    echo json_encode([
+        'success' => false,
+        'message' => 'Failed to save settings.'
+    ]);
 }
-$sql .= " WHERE id=:id LIMIT 1";
-
-$stmt = $pdo->prepare($sql);
-$stmt->execute($update_fields);
-
-echo json_encode(['success'=>true, 'message'=>'Admin settings updated']);

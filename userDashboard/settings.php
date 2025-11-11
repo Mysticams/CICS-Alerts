@@ -2,20 +2,33 @@
 require_once '../config.php';
 if (session_status() == PHP_SESSION_NONE) session_start();
 
+// Redirect if user not logged in
 if (!isset($_SESSION['user_id'])) {
     header("Location: ../login.php");
     exit;
 }
 
-// Fetch user data
+// Fetch user data safely
 $pdo = pdo();
 $stmt = $pdo->prepare("SELECT * FROM users WHERE id = :id");
 $stmt->execute(['id' => $_SESSION['user_id']]);
-$user = $stmt->fetch();
+$user = $stmt->fetch(PDO::FETCH_ASSOC);
+
+if (!$user) {
+    echo "User not found!";
+    exit;
+}
+
+// Safe variables
+$first_name = !empty($user['first_name']) ? $user['first_name'] : '';
+$last_name = !empty($user['last_name']) ? $user['last_name'] : '';
+$email = !empty($user['email']) ? $user['email'] : '';
+$phone = !empty($user['phone']) ? $user['phone'] : '';
+$profile_pic = !empty($user['profile_pic']) ? $user['profile_pic'] : '';
+$initials = strtoupper(substr($first_name, 0, 1) . substr($last_name, 0, 1));
 ?>
 <!DOCTYPE html>
 <html lang="en">
-
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -23,167 +36,33 @@ $user = $stmt->fetch();
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://unpkg.com/feather-icons"></script>
     <style>
-        body,
-        html {
-            margin: 0;
-            padding: 0;
-            font-family: 'Inter', sans-serif;
-            background: #f5f7fa;
-        }
-
-        main {
-            min-height: 100vh;
-            margin-left: 0;
-            padding: 2rem 1rem;
-            transition: all 0.3s;
-        }
-
-        @media (min-width:1024px) {
-            main {
-                margin-left: 17rem;
-                padding: 3rem 2rem;
-            }
-        }
-
-        .card {
-            border-radius: 1rem;
-            padding: 2rem;
-            box-shadow: 0 10px 25px rgba(0, 0, 0, 0.08);
-            background: #fff;
-            max-width: 800px;
-            margin: 0 auto;
-            display: flex;
-            flex-direction: column;
-            gap: 1.5rem;
-        }
-
-        .profile-pic {
-            border-radius: 9999px;
-            background: #f87171;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            font-weight: bold;
-            color: white;
-            overflow: hidden;
-            border: 4px solid #fff;
-            transition: transform 0.2s, box-shadow 0.3s;
-            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2);
-        }
-
-        .profile-pic:hover {
-            transform: scale(1.08);
-            box-shadow: 0 8px 25px rgba(0, 0, 0, 0.25);
-        }
-
-        input:read-only {
-            background: transparent;
-            border: none;
-            font-size: 1rem;
-        }
-
-        input,
-        select,
-        textarea,
-        button {
-            width: 100%;
-            padding: 0.65rem 0.9rem;
-            border-radius: 0.5rem;
-            border: 1px solid #e5e7eb;
-            font-size: 0.95rem;
-            transition: all 0.3s;
-        }
-
-        input:focus,
-        select:focus {
-            outline: none;
-            box-shadow: 0 0 0 2px rgba(248, 113, 113, 0.3);
-            border-color: #f87171;
-        }
-
-        .menu-btn {
-            cursor: pointer;
-            font-size: 1.8rem;
-            color: #374151;
-            transition: color 0.3s;
-        }
-
-        .menu-btn:hover {
-            color: #f87171;
-        }
-
-        .menu-dropdown {
-            display: none;
-            position: absolute;
-            right: 0;
-            top: 2.5rem;
-            background: #fff;
-            border: 1px solid #e5e7eb;
-            border-radius: 0.75rem;
-            z-index: 10;
-            box-shadow: 0 10px 25px rgba(0, 0, 0, 0.15);
-            min-width: 240px;
-            padding: 1rem;
-        }
-
-        .menu-dropdown.active {
-            display: block;
-        }
-
-        button:hover {
-            background-color: #ef4444;
-        }
-
-        label {
-            font-weight: 500;
-            margin-bottom: 0.25rem;
-            display: block;
-            color: #374151;
-        }
-
-        .profile-pic-label {
-            position: absolute;
-            bottom: 0;
-            right: 0;
-            background: #ef4444;
-            color: white;
-            cursor: pointer;
-            transition: 0.2s;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-        }
-
-        .profile-pic-label:hover {
-            background: #b91c1c;
-        }
-
-        @keyframes slide-in {
-            0% {
-                transform: translateX(100%);
-                opacity: 0;
-            }
-
-            100% {
-                transform: translateX(0);
-                opacity: 1;
-            }
-        }
-
-        .animate-slide-in {
-            animation: slide-in 0.3s ease forwards;
-        }
+        body, html {margin:0; padding:0; font-family:'Inter', sans-serif; background:#f5f7fa;}
+        main {min-height:100vh; margin-left:0; padding:2rem 1rem; transition:all 0.3s;}
+        @media (min-width:1024px){ main { margin-left:17rem; padding:3rem 2rem; } }
+        .card { border-radius:1rem; padding:2rem; box-shadow:0 10px 25px rgba(0,0,0,0.08); background:#fff; max-width:800px; margin:0 auto; display:flex; flex-direction:column; gap:1.5rem; }
+        .profile-pic { border-radius:9999px; background:#f87171; display:flex; align-items:center; justify-content:center; font-weight:bold; color:white; overflow:hidden; border:4px solid #fff; transition: transform 0.2s, box-shadow 0.3s; box-shadow:0 4px 15px rgba(0,0,0,0.2);}
+        .profile-pic:hover { transform:scale(1.08); box-shadow:0 8px 25px rgba(0,0,0,0.25);}
+        input:read-only { background:transparent; border:none; font-size:1rem; }
+        input, select, textarea, button { width:100%; padding:0.65rem 0.9rem; border-radius:0.5rem; border:1px solid #e5e7eb; font-size:0.95rem; transition:all 0.3s; }
+        input:focus, select:focus { outline:none; box-shadow:0 0 0 2px rgba(248,113,113,0.3); border-color:#f87171; }
+        .menu-btn { cursor:pointer; font-size:1.8rem; color:#374151; transition:color 0.3s; }
+        .menu-btn:hover { color:#f87171; }
+        .menu-dropdown { display:none; position:absolute; right:0; top:2.5rem; background:#fff; border:1px solid #e5e7eb; border-radius:0.75rem; z-index:10; box-shadow:0 10px 25px rgba(0,0,0,0.15); min-width:240px; padding:1rem; }
+        .menu-dropdown.active { display:block; }
+        button:hover { background-color:#ef4444; }
+        label { font-weight:500; margin-bottom:0.25rem; display:block; color:#374151; }
+        .profile-pic-label { position:absolute; bottom:0; right:0; background:#ef4444; color:white; cursor:pointer; transition:0.2s; display:flex; align-items:center; justify-content:center; }
+        .profile-pic-label:hover { background:#b91c1c; }
+        @keyframes slide-in { 0% { transform:translateX(100%); opacity:0; } 100% { transform:translateX(0); opacity:1; } }
+        .animate-slide-in { animation:slide-in 0.3s ease forwards; }
     </style>
 </head>
-
 <body class="theme-light">
-
     <custom-navbar class="relative z-50"></custom-navbar>
     <custom-sidebar class="relative z-40"></custom-sidebar>
 
     <main class="pt-24">
         <div class="card relative">
-
             <!-- Header -->
             <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3 relative">
                 <div class="flex items-center gap-3">
@@ -223,13 +102,11 @@ $user = $stmt->fetch();
             <!-- Profile Picture -->
             <div class="flex flex-col items-center relative mt-8">
                 <div id="profilePicPreview" class="profile-pic w-28 h-28 sm:w-32 sm:h-32 md:w-36 md:h-36 text-2xl sm:text-3xl md:text-4xl">
-                    <?php
-                    if (!empty($user['profile_pic'])) {
-                        echo '<img src="../uploads/profile_pics/' . $user['profile_pic'] . '" class="w-full h-full object-cover rounded-full">';
-                    } else {
-                        echo strtoupper(substr($user['first_name'], 0, 1) . substr($user['last_name'], 0, 1));
-                    }
-                    ?>
+                    <?php if ($profile_pic): ?>
+                        <img src="../uploads/profile_pics/<?= htmlspecialchars($profile_pic) ?>" class="w-full h-full object-cover rounded-full">
+                    <?php else: ?>
+                        <?= $initials ?: 'NN' ?>
+                    <?php endif; ?>
                 </div>
                 <label for="profilePicInput" class="profile-pic-label w-8 h-8 sm:w-10 sm:h-10 md:w-12 md:h-12 rounded-full shadow-md">
                     <i data-feather="camera" class="w-4 h-4 sm:w-5 sm:h-5 md:w-6 md:h-6"></i>
@@ -242,15 +119,15 @@ $user = $stmt->fetch();
             <form id="profileForm" class="space-y-4 mt-6">
                 <div>
                     <label>Full Name</label>
-                    <input type="text" id="userName" value="<?= htmlspecialchars($user['first_name'] . ' ' . $user['last_name']) ?>" readonly class="bg-gray-100 rounded-md">
+                    <input type="text" id="userName" value="<?= htmlspecialchars(trim("$first_name $last_name")) ?>" readonly class="bg-gray-100 rounded-md">
                 </div>
                 <div>
                     <label>Email</label>
-                    <input type="email" id="userEmail" value="<?= htmlspecialchars($user['email']) ?>" readonly class="bg-gray-100 rounded-md">
+                    <input type="email" id="userEmail" value="<?= htmlspecialchars($email) ?>" readonly class="bg-gray-100 rounded-md">
                 </div>
                 <div>
                     <label>Phone Number</label>
-                    <input type="tel" id="userPhone" value="<?= htmlspecialchars($user['phone']) ?>" readonly class="bg-gray-100 rounded-md">
+                    <input type="tel" id="userPhone" value="<?= htmlspecialchars($phone) ?>" readonly class="bg-gray-100 rounded-md">
                 </div>
                 <button type="submit" id="saveProfileBtn" class="hidden mt-3 bg-red-600 text-white py-2 px-4 rounded hover:bg-red-700 w-full sm:w-auto transition">Save Changes</button>
             </form>
@@ -331,14 +208,8 @@ $user = $stmt->fetch();
             try {
                 const res = await fetch('profile_save.php', {
                     method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json'
-                    },
-                    body: JSON.stringify({
-                        first_name,
-                        last_name,
-                        phone
-                    })
+                    headers: {'Content-Type':'application/json'},
+                    body: JSON.stringify({first_name, last_name, phone})
                 });
                 const result = await res.json();
                 showToast(result.message, result.success ? 'success' : 'error');
@@ -364,5 +235,4 @@ $user = $stmt->fetch();
         });
     </script>
 </body>
-
 </html>

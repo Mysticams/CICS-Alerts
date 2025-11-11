@@ -48,7 +48,7 @@ if(isset($_FILES['profile_pic'])){
     if(move_uploaded_file($file['tmp_name'], $uploadDir.$newName)){
         $stmt = pdo()->prepare("UPDATE users SET profile_pic=:pic WHERE id=:id");
         $stmt->execute(['pic'=>$newName,'id'=>$_SESSION['user_id']]);
-        echo json_encode(['success'=>true,'message'=>'✅ Profile picture updated!','filename'=>$newName]); exit;
+        echo json_encode(['success'=>true,'message'=>'Profile picture updated!','filename'=>$newName]); exit;
     } else {
         echo json_encode(['success'=>false,'message'=>'Upload failed']); exit;
     }
