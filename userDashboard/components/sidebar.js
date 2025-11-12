@@ -84,7 +84,7 @@ class CustomSidebar extends HTMLElement {
         <div class="sidebar-menu">
           <a href="index.php" class="menu-item"><i data-feather="home"></i><span>Dashboard</span></a>
           <a href="alerts.html" class="menu-item"><i data-feather="bell"></i><span>All Alerts</span></a>
-          <a href="sos/user.php" class="menu-item"><i data-feather="alert-circle"></i><span>SOS Button</span></a>
+          <a href="user.php" class="menu-item"><i data-feather="alert-circle"></i><span>SOS Button</span></a>
           <a href="userAck.html" class="menu-item"><i data-feather="message-circle"></i><span>Announcements</span></a>
           <a href="incidentReport.php" class="menu-item"><i data-feather="file-text"></i><span>Incident Report</span></a>
           <a href="user_hotlines.php" class="menu-item"><i data-feather="phone-call"></i><span>Emergency Hotlines</span></a>
