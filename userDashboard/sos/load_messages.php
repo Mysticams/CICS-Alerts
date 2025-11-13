@@ -1,14 +1,14 @@
 <?php
 require('../../config.php');
 
-// ✅ Start session safely (avoid duplicate warnings)
+//Start session safely (avoid duplicate warnings)
 if (session_status() === PHP_SESSION_NONE) {
     session_start();
 }
 
 $pdo = pdo();
 
-// ✅ Determine whose messages to load
+//Determine whose messages to load
 if (isset($_SESSION['user_role']) && $_SESSION['user_role'] === 'user') {
     // For regular user, get their own messages
     $userId = $_SESSION['user_id'];
@@ -44,7 +44,7 @@ if (isset($_SESSION['user_role']) && $_SESSION['user_role'] === 'user') {
     exit;
 }
 
-// ✅ Display messages
+//Display messages
 $messages = $stmt->fetchAll(PDO::FETCH_ASSOC);
 
 foreach ($messages as $msg) {

@@ -56,13 +56,15 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     body {
       background-image: url("../img/bg.png");
       font-family: 'Poppins', sans-serif;
-      background-size: cover;
+      background-size: fixed;
+      background-repeat: no-repeat;
       background-position: center;
       display: flex;
       justify-content: center;
       align-items: center;
       height: 100vh;
       margin: 0;
+      padding: 1rem;
     }
 
     .container-box {
@@ -75,7 +77,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
       overflow: hidden;
       box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
       max-width: 900px;
-      width: 90%;
+      width: 100%;
     }
 
     .left-panel,
@@ -100,6 +102,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
       border-top-right-radius: 1.5rem;
       border-bottom-right-radius: 1.5rem;
       text-align: center;
+      min-height: 100%;
     }
 
     .right-panel h2 {
@@ -112,6 +115,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
       margin-bottom: 1.5rem;
       font-size: 1rem;
       line-height: 1.5;
+      padding: 0 1rem;
     }
 
     .sign-btn {
@@ -163,15 +167,67 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
       border-radius: 1rem;
     }
 
+    /* ✅ RESPONSIVENESS */
+    @media (max-width: 992px) {
+      .container-box {
+        max-width: 95%;
+      }
+
+      .left-panel,
+      .right-panel {
+        padding: 2rem;
+      }
+    }
+
     @media (max-width: 768px) {
       .container-box {
         flex-direction: column;
-        max-width: 95%;
+        width: 100%;
+        max-width: 500px;
       }
 
       .right-panel {
         border-top-left-radius: 0;
         border-bottom-left-radius: 1.5rem;
+        padding: 2rem 1.5rem;
+      }
+
+      .left-panel {
+        padding: 2rem 1.5rem;
+      }
+
+      .right-panel img {
+        width: 60px;
+        height: 60px;
+      }
+
+      .right-panel h2 {
+        font-size: 1.5rem;
+      }
+
+      .right-panel p {
+        font-size: 0.95rem;
+      }
+    }
+
+    @media (max-width: 480px) {
+      body {
+        padding: 0.5rem;
+        height: auto;
+      }
+
+      .container-box {
+        max-width: 100%;
+        border-radius: 1rem;
+      }
+
+      .left-panel,
+      .right-panel {
+        padding: 1.5rem;
+      }
+
+      .sign-btn {
+        font-size: 0.95rem;
       }
     }
   </style>

@@ -71,10 +71,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         // Send SMS
         $message = "Your CICS Emergency and Important Alerts System verification code is: $otp. Expires in 5 minutes.";
         $sms = send_sms_iprog($phone, $message);
-        // We won't treat SMS failure as a fatal error here — but you may log it.
 
         $success = true;
-        // Optionally redirect to OTP verification page with email param
         header("Location: verify_otp.php?email=" . urlencode($email));
         exit;
       }
@@ -84,52 +82,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
   }
 }
 ?>
-<?php
-require_once '../config.php';
-$errors = [];
-
-if ($_SERVER['REQUEST_METHOD'] === 'POST') {
-  $email = trim(strtolower($_POST['email'] ?? ''));
-  $password = $_POST['password'] ?? '';
-  $confirm = $_POST['confirm'] ?? '';
-  $role = $_POST['role'] ?? '';
-
-  if (!filter_var($email, FILTER_VALIDATE_EMAIL)) {
-    $errors[] = "Enter a valid email.";
-  }
-  if ($password === '' || $confirm === '') {
-    $errors[] = "Enter and confirm your password.";
-  } elseif ($password !== $confirm) {
-    $errors[] = "Passwords do not match.";
-  }
-  if (!in_array($role, ['student', 'faculty', 'staff'])) {
-    $errors[] = "Invalid role.";
-  }
-
-  if (empty($errors)) {
-    try {
-      $db = pdo();
-      $stmt = $db->prepare("SELECT id FROM users WHERE email = :email");
-      $stmt->bindParam(':email', $email);
-      $stmt->execute();
-
-      if ($stmt->fetch()) {
-        $errors[] = "Email already registered.";
-      } else {
-        $salt = bin2hex(random_bytes(16));
-        $hash = hash('sha256', $password . $salt);
-        $stmt = $db->prepare("INSERT INTO users (email, password_hash, password_salt, role, is_verified) VALUES (:email, :hash, :salt, :role, 0)");
-        $stmt->execute([':email' => $email, ':hash' => $hash, ':salt' => $salt, ':role' => $role]);
-        header("Location: login.php");
-        exit;
-      }
-    } catch (Exception $e) {
-      $errors[] = "Server error: " . $e->getMessage();
-    }
-  }
-}
-?>
-
 <!doctype html>
 <html lang="en">
 
@@ -145,14 +97,17 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
   <style>
     body {
       background-image: url("../img/bg.png");
-      background-size: cover;
+      background-size: fixed;
+      background-repeat: no-repeat;
       background-position: center;
+      background-attachment: fixed;
       font-family: 'Poppins', sans-serif;
       display: flex;
       justify-content: center;
       align-items: center;
-      height: 100vh;
+      min-height: 100vh;
       margin: 0;
+      padding: 1rem;
     }
 
     .container-box {
@@ -164,17 +119,19 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
       overflow: hidden;
       box-shadow: 0 10px 40px rgba(0, 0, 0, 0.15);
       max-width: 1100px;
-      width: 95%;
+      width: 100%;
+      flex-wrap: wrap;
     }
 
     .left-panel {
-      flex: 0 0 65%;
+      flex: 1 1 60%;
       padding: 3rem;
       background: #fff;
+      min-width: 320px;
     }
 
     .right-panel {
-      flex: 0 0 35%;
+      flex: 1 1 40%;
       background-color: #b91c1c;
       color: white;
       display: flex;
@@ -183,6 +140,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
       align-items: center;
       text-align: center;
       padding: 3rem 2rem;
+      min-width: 280px;
     }
 
     /* Left Panel - Registration Form */
@@ -287,20 +245,60 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     }
 
     /* Responsive Design */
-    @media (max-width: 900px) {
+    @media (max-width: 992px) {
       .container-box {
         flex-direction: column-reverse;
-        max-width: 95%;
+        align-items: center;
       }
 
       .left-panel,
       .right-panel {
         flex: 1 1 100%;
-        padding: 2rem;
+        width: 100%;
+        padding: 2rem 1.5rem;
+      }
+
+      .right-panel {
+        border-radius: 1.5rem 1.5rem 0 0;
+      }
+
+      .left-panel {
+        border-radius: 0 0 1.5rem 1.5rem;
       }
 
       .form-grid {
         grid-template-columns: 1fr;
+      }
+
+      .right-panel img {
+        width: 70px;
+        height: 70px;
+      }
+
+      .right-panel h2 {
+        font-size: 1.5rem;
+      }
+
+      .right-panel p {
+        font-size: 0.95rem;
+      }
+    }
+
+    @media (max-width: 480px) {
+      body {
+        padding: 0.5rem;
+      }
+
+      .container-box {
+        border-radius: 1rem;
+      }
+
+      .sign-btn {
+        font-size: 0.9rem;
+      }
+
+      .right-panel p {
+        font-size: 0.85rem;
       }
     }
   </style>

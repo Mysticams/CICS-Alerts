@@ -84,13 +84,15 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     body {
       background-image: url("../img/bg.png");
       font-family: 'Poppins', sans-serif;
-      background-size: cover;
+      background-size:fixed;
+      background-repeat: no-repeat;
       background-position: center;
       display: flex;
       justify-content: center;
       align-items: center;
       height: 100vh;
       margin: 0;
+      padding: 1rem; 
     }
 
     .container-box {
@@ -104,6 +106,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
       box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
       max-width: 900px;
       width: 90%;
+      min-height: 550px;
     }
 
     .left-panel,
@@ -112,12 +115,10 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
       padding: 3rem;
     }
 
-    /* Left Panel (White) */
     .left-panel {
       background-color: #fff;
     }
 
-    /* Right Panel (Red) */
     .right-panel {
       background-color: #b91c1c;
       color: white;
@@ -134,6 +135,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     .right-panel img {
       width: 100px;
       margin-bottom: 1rem;
+      max-width: 80%;
+      height: auto;
     }
 
     .right-panel h2 {
@@ -147,6 +150,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
       margin-bottom: 1.5rem;
       font-size: 1rem;
       line-height: 1.6;
+      padding: 0 1rem;
     }
 
     .sign-btn {
@@ -171,6 +175,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
       color: white;
       font-weight: 600;
       transition: all 0.3s ease;
+      text-decoration: none;
+      display: inline-block;
     }
 
     .signup-btn:hover {
@@ -182,17 +188,87 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     select {
       border-radius: 9999px;
       padding: 0.75rem 1rem;
+      font-size: 1rem;
     }
 
-    @media (max-width: 768px) {
+    .alert {
+      font-size: 0.9rem;
+      border-radius: 1rem;
+      padding: 0.75rem 1rem;
+    }
+
+    /* ✅ Added for responsiveness */
+    @media (max-width: 992px) {
       .container-box {
         flex-direction: column;
-        max-width: 95%;
+        width: 95%;
+        min-height: auto;
+      }
+
+      .left-panel,
+      .right-panel {
+        padding: 2rem;
       }
 
       .right-panel {
-        border-top-left-radius: 0;
-        border-bottom-left-radius: 1.5rem;
+        border-radius: 0 0 1.5rem 1.5rem;
+      }
+
+      .right-panel h2 {
+        font-size: 1.5rem;
+      }
+
+      .right-panel p {
+        font-size: 0.95rem;
+      }
+
+      body {
+        height: auto;
+        min-height: 100vh;
+      }
+    }
+
+    @media (max-width: 576px) {
+      .left-panel {
+        padding: 1.5rem;
+      }
+
+      .right-panel {
+        padding: 1.5rem;
+      }
+
+      .right-panel img {
+        width: 80px;
+      }
+
+      h2 {
+        font-size: 1.3rem !important;
+      }
+
+      .sign-btn {
+        padding: 0.6rem;
+        font-size: 0.95rem;
+      }
+
+      .signup-btn {
+        padding: 0.5rem 1.5rem;
+        font-size: 0.9rem;
+      }
+
+      .form-control,
+      select {
+        font-size: 0.9rem;
+        padding: 0.6rem 0.8rem;
+      }
+    }
+
+    @media (max-width: 400px) {
+      .container-box {
+        border-radius: 1rem;
+      }
+
+      .right-panel p {
+        font-size: 0.85rem;
       }
     }
   </style>

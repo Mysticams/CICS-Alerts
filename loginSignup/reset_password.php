@@ -60,7 +60,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     body {
       background-image: url("../img/bg.png");
       font-family: 'Poppins', sans-serif;
-      background-size: cover;
+      background-size: fixed;
+      background-repeat: no-repeat;
       background-position: center;
       display: flex;
       justify-content: center;
@@ -80,6 +81,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
       box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
       max-width: 900px;
       width: 90%;
+      transition: all 0.3s ease;
     }
 
     .left-panel,
@@ -180,7 +182,28 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
       text-decoration: underline;
     }
 
+    /* 📱 Responsive Tweaks */
+    @media (max-width: 1024px) {
+      .container-box {
+        width: 95%;
+      }
+
+      .left-panel,
+      .right-panel {
+        padding: 2rem;
+      }
+
+      .right-panel h2 {
+        font-size: 1.6rem;
+      }
+    }
+
     @media (max-width: 768px) {
+      body {
+        height: auto;
+        padding: 2rem 0;
+      }
+
       .container-box {
         flex-direction: column;
         max-width: 95%;
@@ -189,6 +212,27 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
       .right-panel {
         border-top-left-radius: 0;
         border-bottom-left-radius: 1.5rem;
+        padding: 2rem;
+      }
+
+      .right-panel img {
+        width: 80px;
+        height: 80px;
+      }
+    }
+
+    @media (max-width: 480px) {
+      .left-panel,
+      .right-panel {
+        padding: 1.5rem;
+      }
+
+      .right-panel h2 {
+        font-size: 1.4rem;
+      }
+
+      .sign-btn {
+        padding: 0.65rem;
       }
     }
   </style>
