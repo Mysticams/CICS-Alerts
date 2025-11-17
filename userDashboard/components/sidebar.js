@@ -89,6 +89,7 @@ class CustomSidebar extends HTMLElement {
           <a href="incidentReport.php" class="menu-item"><i data-feather="file-text"></i><span>Incident Report</span></a>
           <a href="user_hotlines.php" class="menu-item"><i data-feather="phone-call"></i><span>Emergency Hotlines</span></a>
           <a href="settings.php" class="menu-item"><i data-feather="settings"></i><span>Settings</span></a>
+          <a href="../SMS/user_dashboard.php" class="menu-item"><i data-feather="settings"></i><span>Settings</span></a>
           <div class="menu-divider"></div>
           <a href="../loginSignup/logout.php" class="menu-item logout"><i data-feather="log-out"></i><span>Logout</span></a>
         </div>

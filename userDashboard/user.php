@@ -3,7 +3,7 @@ require '../config.php';
 if (session_status() == PHP_SESSION_NONE) session_start();
 
 if (!isset($_SESSION['logged_in']) || !in_array($_SESSION['user_role'], ['student', 'faculty', 'staff'])) {
-    header("Location: ../loginSignup/login.php");
+    header("Location: ../index.php");
     exit;
 }
 
@@ -54,32 +54,29 @@ $sosActive = (int)$user['sos_active'];
             color: #222;
         }
 
-        /* Sidebar & Navbar */
         custom-sidebar {
             position: fixed;
             top: 0;
             left: 0;
             height: 100%;
             width: 260px;
-            z-index: 100;
+            z-index: 10000;
+            transition: all 0.3s ease;
         }
 
-        custom-navbar {
-            position: fixed;
-            top: 0;
-            left: 260px;
-            right: 0;
-            height: 60px;
-            z-index: 110;
-            display: flex;
-            align-items: center;
-            justify-content: flex-end;
-            padding: 0 20px;
-            background: #fff;
-            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
-        }
+        custom-navbar{
+    position:fixed;
+    top:0;left:260px;right:0;
+    height:60px;
+    z-index:20000; /* <<< PUT NAVBAR IN FRONT OF SIDEBAR */
+    display:flex;align-items:center;justify-content:space-between;
+    padding:0 20px;
+    background:#fff;
+    box-shadow:0 2px 8px rgba(0,0,0,0.08);
+}
 
-        @media (max-width: 991.98px) {
+
+        @media(max-width:991.98px) {
             custom-sidebar {
                 width: 200px;
             }
@@ -89,7 +86,7 @@ $sosActive = (int)$user['sos_active'];
             }
         }
 
-        @media (max-width: 575.98px) {
+        @media(max-width:575.98px) {
             custom-sidebar {
                 width: 0;
             }
@@ -99,138 +96,61 @@ $sosActive = (int)$user['sos_active'];
             }
         }
 
-        /* Topbar adjustments */
-        .topbar {
-            height: 60px;
-            display: flex;
-            align-items: center;
-            justify-content: space-between;
-            padding: 0 20px;
-            box-sizing: border-box;
-            background: #fff;
-            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+        /* top bar with icon */
+        .top-section {
             position: fixed;
             top: 60px;
             left: 260px;
             right: 0;
-            z-index: 105;
-            border-radius: 0 0 12px 12px;
-            transition: left 0.3s ease;
+            height: 80px;
+            background: #fff;
+            z-index: 120;
+            padding: 20px;
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
         }
 
-        @media (max-width: 991.98px) {
-            .topbar {
+        @media(max-width:991.98px) {
+            .top-section {
                 left: 200px;
             }
         }
 
-        @media (max-width: 575.98px) {
-            .topbar {
+        @media(max-width:575.98px) {
+            .top-section {
                 left: 0;
             }
         }
 
-        .brand {
-            display: flex;
-            align-items: center;
-            gap: 12px;
-        }
-
-        .logo {
-            width: 36px;
-            height: 36px;
-            border-radius: 10px;
-            background: linear-gradient(135deg, var(--red), #ff6f6f);
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            color: #fff;
-            font-weight: 800;
-            box-shadow: 0 6px 20px rgba(211, 47, 47, 0.2);
-        }
-
-        .title {
-            font-weight: 800;
-            color: var(--dark-red);
-            font-size: 1rem;
-        }
-
-        .sub {
-            font-size: 0.75rem;
-            color: var(--muted);
-        }
-
-        .topbar .right {
-            margin-left: auto;
-            text-align: right;
-        }
-
-        /* SOS indicator */
-        #sosIndicator {
-            display: flex;
-            align-items: center;
-            gap: 6px;
-            font-weight: bold;
-            color: var(--red);
-            font-size: 0.9rem;
-        }
-
-        #sosIndicator .dot {
-            width: 10px;
-            height: 10px;
-            border-radius: 50%;
-            background: var(--red);
-            animation: pulse 1s infinite;
-        }
-
-        @keyframes pulse {
-            0% {
-                transform: scale(0.7);
-                opacity: 0.6;
-            }
-
-            50% {
-                transform: scale(1.2);
-                opacity: 0.2;
-            }
-
-            100% {
-                transform: scale(0.7);
-                opacity: 0.6;
-            }
-        }
-
-        /* Map adjustments */
         #map {
             position: absolute;
-            top: 120px;
+            top: 140px;
             left: 260px;
             right: 0;
             bottom: 0;
             border-radius: 10px;
             overflow: hidden;
             z-index: 10;
-            transition: left 0.3s ease, top 0.3s ease;
         }
 
         @media(max-width:991.98px) {
             #map {
                 left: 200px;
-                top: 120px;
             }
         }
 
         @media(max-width:575.98px) {
             #map {
                 left: 0;
-                top: 120px;
             }
         }
 
-        /* SOS Button */
+        /* sos button */
         .float-center-bottom {
             position: fixed;
-            left: 50%;
+            left: 58%;
             transform: translateX(-50%);
             bottom: 22px;
             z-index: 40;
@@ -241,33 +161,19 @@ $sosActive = (int)$user['sos_active'];
             height: 150px;
             border-radius: 50%;
             background: linear-gradient(180deg, var(--red), var(--dark-red));
-            color: white;
+            color: #fff;
             border: 6px solid rgba(255, 255, 255, 0.15);
             display: flex;
             align-items: center;
             justify-content: center;
             font-weight: 900;
             font-size: 1.05rem;
-            text-align: center;
-            cursor: pointer;
             flex-direction: column;
             gap: 8px;
             padding: 12px;
-            box-sizing: border-box;
-            box-shadow: 0 18px 40px rgba(183, 28, 28, 0.25), 0 6px 14px rgba(0, 0, 0, 0.15);
+            box-shadow: 0 18px 40px rgba(183, 28, 28, 0.25);
         }
 
-        .sos-button svg {
-            width: 42px;
-            height: 42px;
-            fill: #fff;
-        }
-
-        .sos-button:hover {
-            transform: scale(1.05);
-        }
-
-        /* GPS Buttons */
         .gps-floating {
             position: fixed;
             right: 18px;
@@ -276,7 +182,6 @@ $sosActive = (int)$user['sos_active'];
             display: flex;
             gap: 8px;
             flex-direction: column;
-            align-items: center;
         }
 
         .loc-btn {
@@ -284,32 +189,13 @@ $sosActive = (int)$user['sos_active'];
             height: 56px;
             border-radius: 12px;
             border: 2px solid var(--red);
-            background: var(--card);
+            background: #fff;
             display: flex;
             align-items: center;
             justify-content: center;
-            cursor: pointer;
-            box-shadow: 0 8px 20px rgba(0, 0, 0, 0.12);
             font-weight: 800;
         }
 
-        .loc-btn svg {
-            width: 28px;
-            height: 28px;
-            stroke: var(--red);
-            stroke-width: 1.8;
-            fill: none;
-        }
-
-        .loc-btn:hover {
-            background: var(--red);
-        }
-
-        .loc-btn:hover svg {
-            stroke: #fff;
-        }
-
-        /* Chat */
         #chatContainer {
             position: fixed;
             bottom: 70px;
@@ -319,8 +205,7 @@ $sosActive = (int)$user['sos_active'];
             border-radius: 10px;
             overflow: hidden;
             transition: all 0.3s ease;
-            z-index: 90;
-            /* Behind navbar */
+            z-index: 9999;
         }
 
         #toggleChat {
@@ -335,102 +220,49 @@ $sosActive = (int)$user['sos_active'];
             width: 50px;
             height: 50px;
             font-size: 1.5rem;
-            cursor: pointer;
             display: flex;
             align-items: center;
             justify-content: center;
-        }
-
-        /* Responsive */
-        @media(max-width:991.98px) {
-            .gps-floating {
-                bottom: 160px;
-                right: 14px;
-            }
-
-            .sos-button {
-                width: 135px;
-                height: 135px;
-                font-size: 1rem;
-            }
-
-            #chatContainer {
-                width: 300px;
-                height: 450px;
-            }
-        }
-
-        @media(max-width:575.98px) {
-            .gps-floating {
-                bottom: 130px;
-                right: 12px;
-            }
-
-            .sos-button {
-                width: 120px;
-                height: 120px;
-                font-size: 0.9rem;
-            }
-
-            #chatContainer {
-                width: 90%;
-                height: 50%;
-                bottom: 70px;
-                right: 5%;
-                z-index: 50;
-                /* behind navbar/sidebar */
-            }
         }
     </style>
 </head>
 
 <body>
+
     <custom-navbar>
-        <div id="sosIndicator" style="display: <?php echo $sosActive ? 'flex' : 'none'; ?>;">
-            <div class="dot"></div><span>SOS Active</span>
+        <div id="sosIndicator" style="display:<?php echo $sosActive ? 'flex' : 'none'; ?>;gap:6px;color:var(--red);font-weight:bold;">
+            <div class="dot" style="width:10px;height:10px;border-radius:50%;background:var(--red);"></div>
+            <span>SOS Active</span>
         </div>
     </custom-navbar>
+
     <custom-sidebar></custom-sidebar>
 
+    <!-- New top section with red icon and title -->
+    <div class="top-section">
+        <i data-feather="alert-triangle" style="color:var(--red);width:32px;height:32px;"></i>
+        <h2 style="font-size:1.6rem;font-weight:800;color:var(--red);margin:0;">SOS Control Center</h2>
+    </div>
+
     <div id="app">
-        <div class="topbar">
-            <div class="brand">
-                <div class="logo">SOS</div>
-                <div>
-                    <div class="title">SOS — Live</div>
-                    <div class="sub">Welcome, <?php echo htmlspecialchars($user['first_name']); ?></div>
-                </div>
-            </div>
-            <div class="sub right">Last known shown if GPS off</div>
-        </div>
         <div id="map"></div>
     </div>
 
     <div class="float-center-bottom">
         <button id="sosBtn" class="sos-button" aria-pressed="<?php echo $sosActive ? 'true' : 'false'; ?>">
-            <svg viewBox="0 0 24 24">
-                <path d="M12 4c.38 0 .72.21.88.55l7 14A1 1 0 0 1 19 20H5a1 1 0 0 1-.88-1.45l7-14A.99.99 0 0 1 12 4zm0 4a1 1 0 0 0-1 1v4a1 1 0 0 0 2 0V9a1 1 0 0 0-1-1zm0 8a1.25 1.25 0 1 0 0-2.5A1.25 1.25 0 0 0 12 16z" />
-            </svg>
+            <i data-feather="bell" style="width:42px;height:42px;color:#fff;"></i>
             <span id="sosLabel"><?php echo $sosActive ? 'Deactivate SOS' : 'Press SOS'; ?></span>
         </button>
     </div>
 
     <div class="gps-floating">
-        <div class="loc-btn" id="zoomBtn" title="Zoom to my location">
-            <svg viewBox="0 0 24 24">
-                <path d="M12 2C8.13 2 5 5.13 5 9c0 5.25 7 12 7 12s7-6.75 7-12c0-3.87-3.13-7-7-7zM12 11.5A2.5 2.5 0 1 0 12 6.5 2.5 2.5 0 0 0 12 11.5z" />
-            </svg>
-        </div>
-        <div class="loc-btn" id="centerBtn" title="Center map">
-            <svg viewBox="0 0 24 24">
-                <circle cx="12" cy="12" r="10" stroke-width="1.6" stroke="currentColor" fill="none"></circle>
-                <path d="M14 10l-4 1 1 4 3-5z" />
-            </svg>
-        </div>
+        <div class="loc-btn" id="zoomBtn" title="Zoom to my location"><i data-feather="navigation" style="color:var(--red);"></i></div>
+        <div class="loc-btn" id="centerBtn" title="Center map"><i data-feather="crosshair" style="color:var(--red);"></i></div>
     </div>
 
-    <button id="toggleChat" title="Toggle Chat"><i id="chatIcon" class="bi bi-chat-dots-fill"></i></button>
+    <button id="toggleChat"><i id="chatIcon" class="bi bi-chat-dots-fill"></i></button>
     <div id="chatContainer"><iframe src="sos/chat_user.php" style="width:100%;height:100%;border:none;"></iframe></div>
+
     <audio id="sosSound" src="https://actions.google.com/sounds/v1/alarms/alarm_clock.ogg" preload="auto" loop></audio>
 
     <script src="components/navbar.js"></script>
@@ -438,6 +270,8 @@ $sosActive = (int)$user['sos_active'];
     <script src="https://unpkg.com/leaflet/dist/leaflet.js"></script>
     <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
     <script>
+        feather.replace();
+
         const sosEndpoint = 'sos/ajax_sos.php';
         let sosActive = <?php echo $sosActive ? 'true' : 'false'; ?>;
         let userLat = <?php echo json_encode($lastLat); ?>;

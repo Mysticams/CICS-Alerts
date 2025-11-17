@@ -126,9 +126,10 @@ class CustomSidebar extends HTMLElement {
           <a href="admin.php" class="menu-item"><i data-feather="alert-circle"></i><span>SOS Monitoring</span></a>
           <a href="incidentReport.php" class="menu-item"><i data-feather="file-text"></i><span>Incident Report</span></a>
           <a href="analytics.html" class="menu-item"><i data-feather="bar-chart-2"></i><span>Analytics</span></a>
-          <a href="activityLogs.html" class="menu-item"><i data-feather="layers"></i><span>Activity Logs</span></a>
+          <a href="activity_log.php" class="menu-item"><i data-feather="layers"></i><span>Activity Logs</span></a>
           <a href="admin_hotlines.php" class="menu-item"><i data-feather="phone-call"></i><span>Emergency Hotlines</span></a>
           <a href="settings.php" class="menu-item"><i data-feather="settings"></i><span>Settings</span></a>
+           <a href="../SMS/admin_dashboard.php" class="menu-item"><i data-feather="settings"></i><span>Settings</span></a>
 
           <div class="menu-divider"></div>
 

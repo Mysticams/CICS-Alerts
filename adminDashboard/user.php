@@ -3,7 +3,7 @@ require '../config.php';
 if (session_status() == PHP_SESSION_NONE) session_start();
 
 if (!isset($_SESSION['logged_in']) || !in_array($_SESSION['user_role'], ['student', 'faculty', 'staff'])) {
-    header("Location: ../loginSignup/login.php");
+    header("Location: ../index.php");
     exit;
 }
 

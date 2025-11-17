@@ -251,7 +251,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         <button type="submit" class="sign-btn">Send Reset Code</button>
       </form>
 
-      <a href="login.php" class="top-link">← Back to Login</a>
+      <a href="../index.php" class="top-link">← Back to Login</a>
     </div>
 
     <!-- Right Panel: Info / Catchy Message -->

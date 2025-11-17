@@ -15,7 +15,7 @@ try {
         throw new Exception("Account not found.");
     }
     if ($user['is_verified']) {
-        header("Location: login.php");
+        header("Location: ../index.php");
         exit;
     }
     $otp = random_int(100000, 999999);

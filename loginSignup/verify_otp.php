@@ -244,7 +244,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
       <?php if ($success): ?>
         <div class="alert alert-success">
           Account verified successfully.
-          <a href="login.php" class="fw-semibold text-red-700 text-decoration-none">Log in now</a>
+          <a href="../index.php" class="fw-semibold text-red-700 text-decoration-none">Log in now</a>
         </div>
       <?php else: ?>
         <?php if (!empty($errors)): ?>

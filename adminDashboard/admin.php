@@ -4,7 +4,7 @@ if (session_status() == PHP_SESSION_NONE) session_start();
 
 // Only allow admin
 if (!isset($_SESSION['logged_in']) || $_SESSION['user_role'] !== 'admin') {
-    header("Location: ../loginSignup/login.php");
+    header("Location: ../index.php");
     exit;
 }
 ?>
@@ -112,9 +112,10 @@ if (!isset($_SESSION['logged_in']) || $_SESSION['user_role'] !== 'admin') {
     <main class="pt-20 lg:pt-24 p-6 lg:ml-64 min-h-screen transition-all duration-300">
         <!-- Header -->
         <div class="flex flex-col sm:flex-row justify-between items-center mb-6 gap-3">
-            <h1 class="text-3xl font-extrabold text-gray-800 flex items-center gap-2">
-                <i data-feather="map-pin" class="text-red-700"></i> Live SOS Dashboard
-            </h1>
+           <h1 class="text-3xl font-extrabold flex items-center gap-2 text-red-700">
+    <i data-feather="map-pin"></i> Live SOS Dashboard
+</h1>
+
 
             <div class="bg-white shadow-md rounded-lg px-5 py-2 flex items-center gap-3 border border-red-200">
                 <span class="font-semibold text-gray-700 text-sm">Active SOS:</span>

@@ -3,13 +3,36 @@ session_start();
 require_once '../../config.php';
 $pdo = pdo();
 
-if (!isset($_SESSION['logged_in'], $_SESSION['user_id'], $_SESSION['user_role'])) {
+// Only allow logged-in users
+if (!isset($_SESSION['logged_in'], $_SESSION['user_role'], $_SESSION['user_id']) || $_SESSION['user_role'] !== 'user') {
     http_response_code(403);
     echo "Unauthorized";
     exit;
 }
 
 $userId = (int)$_SESSION['user_id'];
+$message = trim($_POST['message'] ?? '');
+
+if ($message === '') {
+    http_response_code(400);
+    echo "Empty message";
+    exit;
+}
+
+// Insert message directly using PDO (no stored procedure)
+$stmt = $pdo->prepare("
+    INSERT INTO messages (sender, recipient, message, user_id, timestamp)
+    VALUES (:sender, :recipient, :message, :user_id, NOW())
+");
+
+$stmt->execute([
+    ':sender' => 'user',
+    ':recipient' => 'admin',
+    ':message' => $message,
+    ':user_id' => $userId
+]);
+
+echo "Message sent";
 ?>
 <!DOCTYPE html>
 <html lang="en">
@@ -17,29 +40,162 @@ $userId = (int)$_SESSION['user_id'];
 <meta charset="UTF-8">
 <title>User Chat</title>
 <style>
-body { font-family: Arial,sans-serif; margin:0; padding:0; }
-.chat-container { width:400px; margin:50px auto; display:flex; flex-direction:column; height:500px; background:rgba(255,255,255,0.95); border-radius:15px; box-shadow:0 4px 10px rgba(0,0,0,0.2);}
-h1 { background:#b71c1c; color:white; margin:0; padding:15px; text-align:center;}
-.messages { flex:1; padding:15px; overflow-y:auto; display:flex; flex-direction:column; gap:10px; background:#ffebeb;}
-.message { padding:10px; border-radius:10px; max-width:80%; word-wrap:break-word; }
-.message.admin { background:#b71c1c; color:white; align-self:flex-start; }
-.message.user { background:#ffccd5; color:#000; align-self:flex-end; }
-.sender { font-weight:bold; font-size:12px; margin-bottom:5px; }
-.timestamp { font-size:10px; color:#777; text-align:right; margin-top:5px; }
-form { display:flex; padding:10px; border-top:1px solid #ddd; background:#fff;}
-textarea { flex:1; border:none; border-radius:20px; padding:10px 15px; font-size:14px; outline:none; resize:none; background:#ffccd5;}
-button { background:#990000; color:white; border:none; border-radius:50%; width:40px; height:40px; font-size:16px; margin-left:10px; cursor:pointer; display:flex; align-items:center; justify-content:center; }
-button:hover { background:#7f0000; }
+* { box-sizing: border-box; transition: all 0.3s ease; }
+body {
+    margin: 0;
+    font-family: 'Poppins', Arial, sans-serif;
+    display: flex;
+    height: 100vh;
+    background: linear-gradient(135deg, #ffe5e5, #ffffff);
+}
+.chat-section {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    background: #fff;
+    position: relative;
+}
+.chat-header {
+    background: #b71c1c;
+    color: white;
+    padding: 15px 20px;
+    display: flex;
+    align-items: center;
+    border-bottom: 1px solid rgba(255,255,255,0.2);
+}
+.chat-header img {
+    width: 45px;
+    height: 45px;
+    border-radius: 50%;
+    margin-right: 12px;
+    background: #ffebee;
+    border: 2px solid white;
+}
+.chat-header .name { font-weight: 600; font-size: 17px; }
+
+.messages {
+    flex: 1;
+    padding: 20px 25px;
+    overflow-y: auto;
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+    background: linear-gradient(180deg, #fff5f5, #ffffff);
+    scroll-behavior: smooth;
+}
+
+.message-wrapper {
+    display: flex;
+    align-items: flex-end;
+    gap: 10px;
+}
+
+.message-wrapper.admin { justify-content: flex-start; } /* Admin on left */
+.message-wrapper.user { justify-content: flex-end; }   /* User on right */
+
+.avatar {
+    width: 38px;
+    height: 38px;
+    border-radius: 50%;
+    background: #ffebee;
+    flex-shrink: 0;
+}
+
+.message {
+    padding: 12px 16px;
+    border-radius: 15px;
+    max-width: 70%;
+    font-size: 15px;
+    line-height: 1.5;
+    position: relative;
+    word-wrap: break-word;
+    box-shadow: 0 3px 8px rgba(0,0,0,0.1);
+}
+
+.message.admin {
+    background: #b71c1c;
+    color: white;
+    border-bottom-right-radius: 5px;
+}
+
+.message.user {
+    background: #ffe5e5;
+    color: #111;
+    border-bottom-left-radius: 5px;
+}
+
+.timestamp {
+    font-size: 12px;
+    color: #666;
+    margin-top: 5px;
+    text-align: right;
+}
+
+/* Input Area */
+form {
+    display: flex;
+    padding: 15px 20px;
+    border-top: 1px solid #eee;
+    background: #fff;
+    align-items: center;
+}
+
+textarea {
+    flex: 1;
+    border: 1px solid #ddd;
+    border-radius: 25px;
+    padding: 12px 15px;
+    font-size: 15px;
+    outline: none;
+    resize: none;
+    background: #fff8f8;
+    transition: 0.2s;
+}
+
+textarea:focus {
+    border-color: #b71c1c;
+    background: #fff;
+}
+
+button {
+    background: #b71c1c;
+    color: white;
+    border: none;
+    border-radius: 50%;
+    width: 45px;
+    height: 45px;
+    font-size: 20px;
+    margin-left: 10px;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: 0.2s;
+    box-shadow: 0 4px 8px rgba(183, 28, 28, 0.4);
+}
+
+button:hover {
+    background: #7f0000;
+    transform: scale(1.1);
+}
+
+/* Scrollbar */
+::-webkit-scrollbar { width: 6px; }
+::-webkit-scrollbar-thumb { background: #ccc; border-radius: 5px; }
 </style>
 </head>
 <body>
-<div class="chat-container">
-    <h1>Chat with Admin</h1>
+<div class="chat-section">
+    <div class="chat-header">
+        <img src="https://ui-avatars.com/api/?name=<?= urlencode($userName) ?>&background=ff5252&color=fff" alt="User">
+        <div class="name"><?= htmlspecialchars($userName) ?></div>
+    </div>
+
     <div class="messages" id="messages"></div>
 
     <form id="chatForm">
-        <textarea name="message" rows="2" placeholder="Type your message..." required></textarea>
-        <button type="submit">➤</button>
+        <textarea name="message" rows="1" placeholder="Type a message..." required></textarea>
+        <button type="submit">&#10148;</button>
     </form>
 </div>
 
@@ -52,41 +208,53 @@ async function loadMessages() {
         const res = await fetch('chat_fetch_user.php');
         const data = await res.json();
         messagesContainer.innerHTML = '';
+
         data.forEach(msg => {
-            const div = document.createElement('div');
-            div.className = 'message ' + msg.sender;
-            div.innerHTML = `<div class="sender">${msg.sender.charAt(0).toUpperCase() + msg.sender.slice(1)}</div>
-                             <div class="text">${msg.message}</div>
-                             <div class="timestamp">${msg.sent_at}</div>`;
-            messagesContainer.appendChild(div);
+            const wrapper = document.createElement('div');
+            wrapper.className = 'message-wrapper ' + msg.sender;
+
+            const avatar = document.createElement('img');
+            avatar.className = 'avatar';
+            avatar.src = msg.sender === 'admin'
+                ? 'https://ui-avatars.com/api/?name=Admin&background=b71c1c&color=fff'
+                : `https://ui-avatars.com/api/?name=${encodeURIComponent(msg.user_name)}&background=ff5252&color=fff`;
+
+            const bubble = document.createElement('div');
+            bubble.className = 'message ' + msg.sender;
+            bubble.innerHTML = `<div>${msg.message}</div><div class="timestamp">${msg.sent_at}</div>`;
+
+            if (msg.sender === 'admin') {
+                wrapper.appendChild(avatar);
+                wrapper.appendChild(bubble);
+            } else {
+                wrapper.appendChild(bubble);
+                wrapper.appendChild(avatar);
+            }
+
+            messagesContainer.appendChild(wrapper);
         });
+
         messagesContainer.scrollTop = messagesContainer.scrollHeight;
     } catch (err) {
         console.error('Error loading messages:', err);
     }
 }
 
-// Load messages every 1 second
 setInterval(loadMessages, 1000);
 loadMessages();
 
-// Send message via AJAX
 document.getElementById('chatForm').addEventListener('submit', async e => {
     e.preventDefault();
     const textarea = e.target.message;
-    const message = textarea.value.trim();
-    if (!message) return;
+    const msg = textarea.value.trim();
+    if (!msg) return;
 
     const formData = new FormData();
-    formData.append('message', message);
+    formData.append('message', msg);
+    await fetch('chat_send_user.php', { method: 'POST', body: formData });
 
-    try {
-        await fetch('chat_send_user.php', { method:'POST', body:formData });
-        textarea.value = '';
-        loadMessages();
-    } catch (err) {
-        console.error('Error sending message:', err);
-    }
+    textarea.value = '';
+    loadMessages();
 });
 </script>
 </body>

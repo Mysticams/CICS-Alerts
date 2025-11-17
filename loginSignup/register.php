@@ -361,7 +361,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         <button type="submit" class="sign-btn mt-3">Register & Send OTP</button>
       </form>
 
-      <a href="login.php" class="top-link">Already have an account? Log in</a>
+      <a href="../index.php" class="top-link">Already have an account? Log in</a>
     </div>
 
     <!-- Right Panel -->
@@ -369,7 +369,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
       <img src="../img/bsu.png" alt="CICS Logo">
       <h2>Welcome to CICS Alerts!</h2>
       <p>Register with your personal details to use all features of the <strong>CICS Emergency & Important Alerts System</strong>. Stay informed. Stay safe!</p>
-      <a href="login.php" class="signin-btn">Sign In</a>
+      <a href="../index.php" class="signin-btn">Sign In</a>
     </div>
 
   </div>
