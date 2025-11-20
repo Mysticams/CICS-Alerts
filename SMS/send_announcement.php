@@ -28,6 +28,9 @@ function generateToken($length = 32) {
 $results = [];
 
 foreach ($recipients as $phone) {
+    // Ensure phone is string
+    $phone = is_array($phone) ? implode(',', $phone) : (string)$phone;
+
     $token = generateToken();
     $tokenHash = hash('sha256', $token);
     $expiresAt = date('Y-m-d H:i:s', strtotime('+24 hours'));
@@ -43,7 +46,7 @@ foreach ($recipients as $phone) {
 
         // Build acknowledgment link
         $ackUrl = $baseAckUrl . urlencode($token);
-        $smsMessage = $message . "\nAcknowledge: " . $ackUrl;
+        $smsMessage = $message . "\nAcknowledge here: " . $ackUrl;
 
         // Send SMS via iProg API
         $data = [
@@ -68,6 +71,7 @@ foreach ($recipients as $phone) {
             'acknowledged' => 0,
             'status' => $success ? 'Sent' : 'Failed',
             'message' => $respDecoded['message'] ?? 'No response',
+            'ackUrl' => $ackUrl // store the link for clickable table
         ];
 
     } catch (Exception $e) {
@@ -76,6 +80,7 @@ foreach ($recipients as $phone) {
             'acknowledged' => 0,
             'status' => 'Failed',
             'message' => $e->getMessage(),
+            'ackUrl' => '' // empty link on failure
         ];
     }
 }
@@ -190,7 +195,13 @@ footer {
 <tr data-phone="<?= htmlspecialchars($r['phone']) ?>">
     <td><?= htmlspecialchars($r['phone']) ?></td>
     <td class="<?= strtolower($r['status']) ?>"><?= htmlspecialchars($r['status']) ?></td>
-    <td class="pending">Pending</td>
+    <td class="pending">
+        <?php if (!empty($r['ackUrl'])): ?>
+            <a href="<?= htmlspecialchars($r['ackUrl']) ?>" target="_blank">Click to acknowledge</a>
+        <?php else: ?>
+            N/A
+        <?php endif; ?>
+    </td>
 </tr>
 <?php endforeach; ?>
 </table>

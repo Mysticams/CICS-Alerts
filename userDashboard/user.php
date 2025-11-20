@@ -64,17 +64,20 @@ $sosActive = (int)$user['sos_active'];
             transition: all 0.3s ease;
         }
 
-        custom-navbar{
-    position:fixed;
-    top:0;left:260px;right:0;
-    height:60px;
-    z-index:20000; /* <<< PUT NAVBAR IN FRONT OF SIDEBAR */
-    display:flex;align-items:center;justify-content:space-between;
-    padding:0 20px;
-    background:#fff;
-    box-shadow:0 2px 8px rgba(0,0,0,0.08);
-}
-
+        custom-navbar {
+            position: fixed;
+            top: 0;
+            left: 260px;
+            right: 0;
+            height: 60px;
+            z-index: 15000; /* Make navbar in front of sidebar */
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 0 20px;
+            background: #fff;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+        }
 
         @media(max-width:991.98px) {
             custom-sidebar {
@@ -96,7 +99,6 @@ $sosActive = (int)$user['sos_active'];
             }
         }
 
-        /* top bar with icon */
         .top-section {
             position: fixed;
             top: 60px;
@@ -104,7 +106,7 @@ $sosActive = (int)$user['sos_active'];
             right: 0;
             height: 80px;
             background: #fff;
-            z-index: 120;
+            z-index: 100; /* Behind chat */
             padding: 20px;
             display: flex;
             align-items: center;
@@ -132,7 +134,7 @@ $sosActive = (int)$user['sos_active'];
             bottom: 0;
             border-radius: 10px;
             overflow: hidden;
-            z-index: 10;
+            z-index: 50; /* Map behind chat */
         }
 
         @media(max-width:991.98px) {
@@ -147,13 +149,12 @@ $sosActive = (int)$user['sos_active'];
             }
         }
 
-        /* sos button */
         .float-center-bottom {
             position: fixed;
-            left: 58%;
+            left: 50%;
             transform: translateX(-50%);
             bottom: 22px;
-            z-index: 40;
+            z-index: 60; /* SOS button above map but behind chat */
         }
 
         .sos-button {
@@ -178,7 +179,7 @@ $sosActive = (int)$user['sos_active'];
             position: fixed;
             right: 18px;
             bottom: 190px;
-            z-index: 40;
+            z-index: 60; /* Above map */
             display: flex;
             gap: 8px;
             flex-direction: column;
@@ -205,14 +206,15 @@ $sosActive = (int)$user['sos_active'];
             border-radius: 10px;
             overflow: hidden;
             transition: all 0.3s ease;
-            z-index: 9999;
+            z-index: 20000; /* Chat always on top */
+            background: #fff;
         }
 
         #toggleChat {
             position: fixed;
             bottom: 20px;
             right: 20px;
-            z-index: 110;
+            z-index: 21000; /* Toggle above chat */
             background: var(--red);
             color: white;
             border: none;
@@ -238,7 +240,6 @@ $sosActive = (int)$user['sos_active'];
 
     <custom-sidebar></custom-sidebar>
 
-    <!-- New top section with red icon and title -->
     <div class="top-section">
         <i data-feather="alert-triangle" style="color:var(--red);width:32px;height:32px;"></i>
         <h2 style="font-size:1.6rem;font-weight:800;color:var(--red);margin:0;">SOS Control Center</h2>
@@ -261,7 +262,9 @@ $sosActive = (int)$user['sos_active'];
     </div>
 
     <button id="toggleChat"><i id="chatIcon" class="bi bi-chat-dots-fill"></i></button>
-    <div id="chatContainer"><iframe src="sos/chat_user.php" style="width:100%;height:100%;border:none;"></iframe></div>
+    <div id="chatContainer">
+        <iframe src="sos/chat_user.php" style="width:100%;height:100%;border:none;"></iframe>
+    </div>
 
     <audio id="sosSound" src="https://actions.google.com/sounds/v1/alarms/alarm_clock.ogg" preload="auto" loop></audio>
 
@@ -271,13 +274,11 @@ $sosActive = (int)$user['sos_active'];
     <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
     <script>
         feather.replace();
-
         const sosEndpoint = 'sos/ajax_sos.php';
         let sosActive = <?php echo $sosActive ? 'true' : 'false'; ?>;
         let userLat = <?php echo json_encode($lastLat); ?>;
         let userLng = <?php echo json_encode($lastLng); ?>;
-        let map, userMarker, trailPolyline, trailCoords = [],
-            trailMaxPoints = 120;
+        let map, userMarker, trailPolyline, trailCoords = [], trailMaxPoints = 120;
         let alarmPlaying = false;
 
         function userIcon(isSOS) {
@@ -295,32 +296,19 @@ $sosActive = (int)$user['sos_active'];
             trailCoords.push([lat, lng]);
             if (trailCoords.length > trailMaxPoints) trailCoords.shift();
             trailPolyline.setLatLngs(trailCoords);
-            trailPolyline.setStyle({
-                color: sosActive ? 'red' : 'green'
-            });
+            trailPolyline.setStyle({ color: sosActive ? 'red' : 'green' });
             if (userMarker) map.removeLayer(userMarker);
-            userMarker = L.marker([lat, lng], {
-                icon: userIcon(sosActive)
-            }).addTo(map);
+            userMarker = L.marker([lat, lng], { icon: userIcon(sosActive) }).addTo(map);
             userMarker.bindPopup(`<strong>You</strong><br>SOS: ${sosActive?'YES':'No'}`);
             if (center) map.setView([lat, lng], 15);
         }
 
         function initMap() {
-            map = L.map('map', {
-                zoomControl: false
-            }).setView([userLat, userLng], 15);
+            map = L.map('map', { zoomControl: false }).setView([userLat, userLng], 15);
             L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png').addTo(map);
-            trailPolyline = L.polyline([], {
-                color: sosActive ? 'red' : 'green',
-                weight: 4,
-                lineJoin: 'round',
-                lineCap: 'round'
-            }).addTo(map);
+            trailPolyline = L.polyline([], { color: sosActive ? 'red' : 'green', weight: 4, lineJoin: 'round', lineCap: 'round' }).addTo(map);
             updateUserMarker(userLat, userLng, true);
-            L.control.zoom({
-                position: 'topright'
-            }).addTo(map);
+            L.control.zoom({ position: 'topright' }).addTo(map);
         }
 
         function geoSuccess(pos) {
@@ -335,11 +323,7 @@ $sosActive = (int)$user['sos_active'];
         }
 
         function sendLocation(lat, lng) {
-            $.post(sosEndpoint, {
-                lat,
-                lng,
-                sos: sosActive ? 1 : 0
-            });
+            $.post(sosEndpoint, { lat, lng, sos: sosActive ? 1 : 0 });
         }
 
         function startAlarm() {
@@ -375,14 +359,8 @@ $sosActive = (int)$user['sos_active'];
         $(document).ready(function() {
             initMap();
             if (navigator.geolocation) {
-                navigator.geolocation.getCurrentPosition(geoSuccess, geoError, {
-                    enableHighAccuracy: true,
-                    timeout: 7000
-                });
-                setInterval(() => navigator.geolocation.getCurrentPosition(geoSuccess, geoError, {
-                    enableHighAccuracy: true,
-                    timeout: 5000
-                }), 2000);
+                navigator.geolocation.getCurrentPosition(geoSuccess, geoError, { enableHighAccuracy: true, timeout: 7000 });
+                setInterval(() => navigator.geolocation.getCurrentPosition(geoSuccess, geoError, { enableHighAccuracy: true, timeout: 5000 }), 2000);
             }
 
             $('#sosBtn').on('click', function() {
@@ -403,7 +381,6 @@ $sosActive = (int)$user['sos_active'];
             setInterval(pollServerSOS, 3000);
             if (sosActive) startAlarm();
 
-            // Chat toggle
             const chatContainer = $('#chatContainer');
             const toggleBtn = $('#toggleChat');
             const chatIcon = $('#chatIcon');
@@ -411,10 +388,8 @@ $sosActive = (int)$user['sos_active'];
 
             toggleBtn.on('click', () => {
                 chatOpen = !chatOpen;
-                const isMobile = $(window).width() <= 575.98;
                 if (chatOpen) {
                     chatContainer.show();
-                    chatContainer.css('z-index', isMobile ? 50 : 101);
                     chatIcon.removeClass('bi-chat-dots').addClass('bi-chat-dots-fill');
                 } else {
                     chatContainer.hide();

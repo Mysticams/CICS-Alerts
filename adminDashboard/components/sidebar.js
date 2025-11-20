@@ -101,7 +101,7 @@ class CustomSidebar extends HTMLElement {
         }
 
          .menu-item.logout {
-          margin-top: 11rem;
+          margin-top: 0rem;
         }
 
         aside::-webkit-scrollbar {
@@ -121,15 +121,15 @@ class CustomSidebar extends HTMLElement {
       <aside id="sidebar">
         <div class="sidebar-menu">
           <a href="index.php" class="menu-item"><i data-feather="home"></i><span>Dashboard</span></a>
-          <a href="sendAlert.html" class="menu-item"><i data-feather="send"></i><span>Send Alert</span></a>
-          <a href="trackingAcknowledgement.html" class="menu-item"><i data-feather="check-square"></i><span>Acknowledgment</span></a>
           <a href="admin.php" class="menu-item"><i data-feather="alert-circle"></i><span>SOS Monitoring</span></a>
           <a href="incidentReport.php" class="menu-item"><i data-feather="file-text"></i><span>Incident Report</span></a>
-          <a href="analytics.html" class="menu-item"><i data-feather="bar-chart-2"></i><span>Analytics</span></a>
+          <a href="announcement_form.php" class="menu-item"><i data-feather="send"></i><span>Send Announcements</span></a>
+          <a href="trackingAcknowledgement.html" class="menu-item"><i data-feather="check-square"></i><span>Acknowledgment</span></a>
           <a href="activity_log.php" class="menu-item"><i data-feather="layers"></i><span>Activity Logs</span></a>
+          <a href="user_list.php" class="menu-item"><i data-feather="users"></i><span>User List</span></a>
+          <a href="analytics.html" class="menu-item"><i data-feather="bar-chart-2"></i><span>Analytics</span></a>
           <a href="admin_hotlines.php" class="menu-item"><i data-feather="phone-call"></i><span>Emergency Hotlines</span></a>
           <a href="settings.php" class="menu-item"><i data-feather="settings"></i><span>Settings</span></a>
-           <a href="../SMS/admin_dashboard.php" class="menu-item"><i data-feather="settings"></i><span>Settings</span></a>
 
           <div class="menu-divider"></div>
 

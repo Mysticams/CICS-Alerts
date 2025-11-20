@@ -1,12 +1,12 @@
 <?php
 session_start();
-require_once '../config.php'; // Ensure pdo() is defined
+require_once '../config.php'; 
 
-$pdo = pdo(); // Initialize PDO connection
+$pdo = pdo(); 
 
 // --- ADMIN ONLY ACCESS ---
 if (!isset($_SESSION['user_id']) || ($_SESSION['user_role'] ?? '') !== 'admin') {
-    header("Location: ../loginSignup/login.php");
+    header("Location: ../index.php");
     exit;
 }
 
@@ -23,17 +23,6 @@ try {
 } catch (PDOException $e) {
     die("Database error: " . $e->getMessage());
 }
-
-// --- HELPER FUNCTION ---
-function timeAgo($datetime) {
-    $time = strtotime($datetime);
-    $diff = time() - $time;
-
-    if ($diff < 60) return $diff . ' second' . ($diff != 1 ? 's' : '') . ' ago';
-    if ($diff < 3600) return floor($diff/60) . ' minute' . (floor($diff/60) != 1 ? 's' : '') . ' ago';
-    if ($diff < 86400) return floor($diff/3600) . ' hour' . (floor($diff/3600) != 1 ? 's' : '') . ' ago';
-    return floor($diff/86400) . ' day' . (floor($diff/86400) != 1 ? 's' : '') . ' ago';
-}
 ?>
 <!DOCTYPE html>
 <html lang="en">
@@ -44,117 +33,197 @@ function timeAgo($datetime) {
 
 <!-- Tailwind CSS -->
 <script src="https://cdn.tailwindcss.com"></script>
+<!-- Bootstrap -->
+<link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet" />
+<!-- Chart.js -->
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<!-- jsPDF & XLSX -->
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.5.28/jspdf.plugin.autotable.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
 <!-- Feather Icons -->
 <script src="https://unpkg.com/feather-icons"></script>
+
+<style>
+  body { font-family: 'Inter', sans-serif; background-color: #f9fafb; }
+  .dashboard-card {
+    background-color: #fff; border-radius: 1rem;
+    box-shadow: 0 4px 20px rgba(0,0,0,0.06);
+    transition: 0.3s;
+  }
+  .dashboard-card:hover { transform: translateY(-3px); box-shadow: 0 10px 25px rgba(0,0,0,0.08); }
+  #acknowledgmentChart { width: 100%; height: 250px; }
+</style>
 </head>
 
 <body class="bg-gray-100 font-sans">
 
-  <!-- Navbar -->
-  <custom-navbar></custom-navbar>
+<!-- Navbar -->
+<custom-navbar></custom-navbar>
 
-  <!-- Sidebar -->
-  <custom-sidebar></custom-sidebar>
+<!-- Sidebar -->
+<custom-sidebar></custom-sidebar>
 
-  <main class="pt-20 lg:pt-24 p-6 lg:ml-64 min-h-screen transition-all duration-300">
+<!-- MAIN CONTENT WRAPPER -->
+<main class="pt-20 lg:pt-24 p-6 lg:ml-64 min-h-screen transition-all duration-300">
+
     <!-- Dashboard Overview -->
-    <section class="mb-8">
-      <div class="flex justify-between items-center mb-4">
-        <div>
-          <h2 class="text-2xl font-bold text-red-700">Dashboard Overview</h2>
-          <p class="text-gray-600">Welcome back, <span class="font-semibold">Admin</span></p>
+    <section class="mb-10">
+        <div class="flex justify-between items-center mb-4">
+            <div>
+                <h2 class="text-2xl font-bold text-red-700">Dashboard Overview</h2>
+                <p class="text-gray-600">Welcome back, <span class="font-semibold">Admin</span></p>
+            </div>
+            <div class="bg-white p-2 rounded-lg shadow flex items-center">
+                <i data-feather="calendar" class="text-red-600 mr-2"></i>
+                <span id="currentDate"></span>
+            </div>
         </div>
-        <div class="flex items-center space-x-4">
-          <div class="bg-white p-2 rounded-lg shadow flex items-center">
-            <i data-feather="calendar" class="text-red-600 mr-2"></i>
-            <span id="currentDate"></span>
+
+        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+            <div class="bg-white p-6 rounded-lg shadow border-l-4 border-red-500">
+                <div class="flex items-center">
+                    <div class="p-3 rounded-full bg-red-100 mr-4"><i data-feather="users" class="text-red-600"></i></div>
+                    <div><p class="text-gray-500 text-sm">Total Users</p><h3 class="text-2xl font-bold"><?= $totalUsers ?></h3></div>
+                </div>
+            </div>
+            <div class="bg-white p-6 rounded-lg shadow border-l-4 border-red-500">
+                <div class="flex items-center">
+                    <div class="p-3 rounded-full bg-red-100 mr-4"><i data-feather="bell" class="text-red-600"></i></div>
+                    <div><p class="text-gray-500 text-sm">Total Alerts</p><h3 class="text-2xl font-bold"><?= $totalAlerts ?></h3></div>
+                </div>
+            </div>
+            <div class="bg-white p-6 rounded-lg shadow border-l-4 border-red-500">
+                <div class="flex items-center">
+                    <div class="p-3 rounded-full bg-red-100 mr-4"><i data-feather="check-circle" class="text-red-600"></i></div>
+                    <div><p class="text-gray-500 text-sm">Acknowledged</p><h3 class="text-2xl font-bold"><?= $acknowledged ?></h3></div>
+                </div>
+            </div>
+            <div class="bg-white p-6 rounded-lg shadow border-l-4 border-red-500">
+                <div class="flex items-center">
+                    <div class="p-3 rounded-full bg-red-100 mr-4"><i data-feather="alert-triangle" class="text-red-600"></i></div>
+                    <div><p class="text-gray-500 text-sm">Active SOS</p><h3 class="text-2xl font-bold"><?= $activeSOS ?></h3></div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- ANALYTICS SECTION -->
+    <section class="grid grid-cols-1 lg:grid-cols-2 gap-8">
+
+      <!-- Alert Activity -->
+      <div class="dashboard-card p-6 relative">
+        <div class="flex justify-between items-center mb-4">
+          <h3 class="text-lg font-semibold text-red-700">Alert Activity</h3>
+          <div class="flex space-x-2">
+            <button class="text-xs px-2 py-1 bg-red-100 text-red-700 rounded-lg">Daily</button>
+            <button class="text-xs px-2 py-1 bg-gray-100 rounded-lg">Weekly</button>
+            <button class="text-xs px-2 py-1 bg-gray-100 rounded-lg">Monthly</button>
+          </div>
+        </div>
+        <div class="flex justify-end mb-3 space-x-2">
+          <button class="btn btn-sm btn-outline-danger" onclick="exportToExcel()">Excel</button>
+          <button class="btn btn-sm btn-outline-danger" onclick="exportToPDF()">PDF</button>
+        </div>
+        <div class="h-80"><canvas id="alertChart"></canvas></div>
+      </div>
+
+      <!-- Acknowledgment Rate -->
+      <div class="dashboard-card p-6">
+        <div class="flex justify-between items-center mb-4">
+          <h3 class="text-lg font-semibold text-red-700">Acknowledgment Rate</h3>
+          <div class="flex space-x-2">
+            <button class="btn btn-sm btn-outline-danger" onclick="exportAckExcel()">Excel</button>
+            <button class="btn btn-sm btn-outline-danger" onclick="exportAckPDF()">PDF</button>
+          </div>
+        </div>
+        <div class="h-64 relative">
+          <canvas id="acknowledgmentChart"></canvas>
+          <div class="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 text-center">
+            <p class="text-4xl font-bold text-gray-800" id="ackRateText">0%</p>
+            <p class="text-gray-500 text-sm mt-1">Acknowledgment Rate</p>
           </div>
         </div>
       </div>
 
-      <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-        <div class="stats-card bg-white p-6 rounded-lg shadow border-l-4 border-red-500">
-          <div class="flex items-center">
-            <div class="p-3 rounded-full bg-red-100 mr-4">
-              <i data-feather="users" class="text-red-600"></i>
-            </div>
-            <div>
-              <p class="text-gray-500 text-sm">Total Users</p>
-              <h3 class="text-2xl font-bold"><?= $totalUsers ?></h3>
-            </div>
-          </div>
-        </div>
-        <div class="stats-card bg-white p-6 rounded-lg shadow border-l-4 border-red-500">
-          <div class="flex items-center">
-            <div class="p-3 rounded-full bg-red-100 mr-4">
-              <i data-feather="bell" class="text-red-600"></i>
-            </div>
-            <div>
-              <p class="text-gray-500 text-sm">Total Alerts</p>
-              <h3 class="text-2xl font-bold"><?= $totalAlerts ?></h3>
-            </div>
-          </div>
-        </div>
-        <div class="stats-card bg-white p-6 rounded-lg shadow border-l-4 border-red-500">
-          <div class="flex items-center">
-            <div class="p-3 rounded-full bg-red-100 mr-4">
-              <i data-feather="check-circle" class="text-red-600"></i>
-            </div>
-            <div>
-              <p class="text-gray-500 text-sm">Acknowledged</p>
-              <h3 class="text-2xl font-bold"><?= $acknowledged ?></h3>
-            </div>
-          </div>
-        </div>
-        <div class="stats-card bg-white p-6 rounded-lg shadow border-l-4 border-red-500">
-          <div class="flex items-center">
-            <div class="p-3 rounded-full bg-red-100 mr-4">
-              <i data-feather="alert-triangle" class="text-red-600"></i>
-            </div>
-            <div>
-              <p class="text-gray-500 text-sm">Active SOS</p>
-              <h3 class="text-2xl font-bold"><?= $activeSOS ?></h3>
-            </div>
-          </div>
-        </div>
-      </div>
     </section>
 
-    <!-- Recent Alerts -->
-    <section class="mb-8">
-      <h2 class="text-2xl font-bold mb-4 text-red-700">Real-time Notifications</h2>
-      <div class="bg-white rounded-2xl shadow overflow-hidden">
-        <div class="p-4 bg-red-700 text-white flex items-center">
-          <i data-feather="bell" class="mr-2"></i>
-          <span>Live Alerts</span>
-        </div>
-        <div class="divide-y divide-gray-200 max-h-96 overflow-y-auto">
-          <?php foreach ($recentAlerts as $alert): ?>
-          <div class="p-4 hover:bg-gray-50 flex items-start">
-            <div class="bg-red-100 p-2 rounded-full mr-3">
-              <i data-feather="alert-triangle" class="text-red-600"></i>
-            </div>
-            <div>
-              <p class="font-medium"><?= htmlspecialchars($alert['title']) ?></p>
-              <p class="text-sm text-gray-500"><?= htmlspecialchars($alert['location'] ?? 'Unknown location') ?></p>
-              <p class="text-xs text-gray-400 mt-1"><?= timeAgo($alert['created_at']) ?></p>
-            </div>
-          </div>
-          <?php endforeach; ?>
-        </div>
-      </div>
-    </section>
-  </main>
+</main>
 
 <script src="components/navbar.js"></script>
 <script src="components/sidebar.js"></script>
-<script src="script.js"></script>
+
 <script>
 feather.replace();
+document.getElementById('currentDate').textContent =
+    new Date().toLocaleDateString('en-US', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' });
 
-document.getElementById('currentDate').textContent = new Date().toLocaleDateString('en-US', {
-    weekday: 'long', year: 'numeric', month: 'long', day: 'numeric'
+/* ===== ALERT CHART ===== */
+new Chart(document.getElementById('alertChart'), {
+  type: 'line',
+  data: {
+    labels: ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun'],
+    datasets: [
+      { label: 'Alerts Sent', data: [12, 19, 3, 5, 2, 3], borderColor: '#dc2626', backgroundColor: 'rgba(220,38,38,0.1)', tension: 0.4, borderWidth: 3 },
+      { label: 'Acknowledged', data: [10, 15, 2, 4, 1, 2], borderColor: '#16a34a', backgroundColor: 'rgba(22,163,74,0.1)', tension: 0.4, borderWidth: 3 }
+    ]
+  },
+  options: { responsive: true, plugins: { legend: { position: 'top' }}, scales: { y: { beginAtZero: true }} }
 });
+
+/* ===== GAUGE CHART ===== */
+const gauge = document.getElementById('acknowledgmentChart');
+const gaugeCtx = gauge.getContext('2d');
+const target = 76;
+let current = 0;
+
+function drawGauge(percentage) {
+  const centerX = gauge.width / 2;
+  const centerY = gauge.height * 0.9;
+  const radius = 90;
+  const startAngle = Math.PI;
+  const segments = 50;
+  const gap = Math.PI / (segments * 5);
+
+  gaugeCtx.clearRect(0, 0, gauge.width, gauge.height);
+
+  for (let i = 0; i < segments; i++) {
+    const angleStart = startAngle + i * (Math.PI / segments);
+    const angleEnd = angleStart + (Math.PI / segments) - gap;
+    gaugeCtx.beginPath();
+    gaugeCtx.arc(centerX, centerY, radius, angleStart, angleEnd);
+    gaugeCtx.lineWidth = 10;
+    gaugeCtx.strokeStyle = i / segments < percentage / 100 ? '#dc2626' : '#e5e7eb';
+    gaugeCtx.stroke();
+  }
+
+  document.getElementById('ackRateText').innerText = percentage + '%';
+}
+const anim = setInterval(() => { if (current < target) { current++; drawGauge(current); } else clearInterval(anim); }, 20);
+
+/* ===== EXPORT ===== */
+function exportToExcel() {
+  const data = [['Month','Alerts Sent','Acknowledged'],['Jan',12,10],['Feb',19,15],['Mar',3,2],['Apr',5,4],['May',2,1],['Jun',3,2]];
+  const ws = XLSX.utils.aoa_to_sheet(data); const wb = XLSX.utils.book_new();
+  XLSX.utils.book_append_sheet(wb, ws, 'Alert Data'); XLSX.writeFile(wb, 'Alert_Activity.xlsx');
+}
+function exportToPDF() {
+  const { jsPDF } = window.jspdf; const doc = new jsPDF();
+  doc.text("Alert Activity Report", 14, 20);
+  doc.autoTable({ startY: 30, head: [['Month','Alerts Sent','Acknowledged']], body: [['Jan',12,10],['Feb',19,15],['Mar',3,2],['Apr',5,4],['May',2,1],['Jun',3,2]] });
+  doc.save('Alert_Activity_Report.pdf');
+}
+function exportAckExcel() {
+  const ws = XLSX.utils.aoa_to_sheet([['Metric','Value'],['Acknowledgment Rate', target + '%']]);
+  const wb = XLSX.utils.book_new(); XLSX.utils.book_append_sheet(wb, ws, 'Ack Rate'); XLSX.writeFile(wb, 'Acknowledgment_Rate.xlsx');
+}
+function exportAckPDF() {
+  const { jsPDF } = window.jspdf; const doc = new jsPDF();
+  doc.text("Acknowledgment Rate Report", 14, 20);
+  doc.autoTable({ startY: 30, head: [['Metric','Value']], body: [['Acknowledgment Rate', target + '%']] });
+  doc.save('Acknowledgment_Rate_Report.pdf');
+}
 </script>
+
 </body>
 </html>

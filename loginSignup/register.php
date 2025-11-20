@@ -9,7 +9,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
   $last = trim($_POST['last_name'] ?? '');
   $email = trim(strtolower($_POST['email'] ?? ''));
   $phone = trim($_POST['phone'] ?? '');
-  $role = $_POST['role'] ?? 'student';
   $password = $_POST['password'] ?? '';
   $password_confirm = $_POST['password_confirm'] ?? '';
 
@@ -23,7 +22,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
   if (!filter_var($email, FILTER_VALIDATE_EMAIL) || !validate_bsu_email($email)) {
     $errors[] = "Please use a valid BSU email in the form xx-xxxxx@g.batstate-u.edu.ph.";
   }
-  // Phone validation (Philippines format starting with 63 or 09)
+  // Phone validation
   if (!preg_match('/^(?:63|0)?9[0-9]{9}$/', $phone)) {
     $errors[] = "Please provide a valid Philippine mobile number (e.g., 639XXXXXXXXX or 09XXXXXXXXX).";
   }
@@ -32,9 +31,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
   }
   if ($password !== $password_confirm) {
     $errors[] = "Passwords do not match.";
-  }
-  if (!in_array($role, ['student', 'faculty', 'staff'])) {
-    $errors[] = "Invalid role selected.";
   }
 
   if (empty($errors)) {
@@ -55,8 +51,15 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         // Generate OTP
         $otp = random_int(100000, 999999);
         $otp_expires = (new DateTime())->add(new DateInterval('PT' . OTP_EXPIRY_SECONDS . 'S'))->format('Y-m-d H:i:s');
+        $role = "student"; // Default role
 
-        $insert = $db->prepare("INSERT INTO users (first_name, last_name, email, phone, role, password_hash, password_salt, otp_code, otp_expires, is_verified) VALUES (:first, :last, :email, :phone, :role, :hash, :salt, :otp, :otp_expires, 0)");
+        // FIXED INSERT
+        $insert = $db->prepare("
+          INSERT INTO users 
+          (first_name, last_name, email, phone, role, password_hash, password_salt, otp_code, otp_expires, is_verified)
+          VALUES 
+          (:first, :last, :email, :phone, :role, :hash, :salt, :otp, :otp_expires, 0)
+        ");
         $insert->bindParam(':first', $first);
         $insert->bindParam(':last', $last);
         $insert->bindParam(':email', $email);
@@ -69,10 +72,9 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         $insert->execute();
 
         // Send SMS
-        $message = "Your CICS Emergency and Important Alerts System verification code is: $otp. Expires in 5 minutes.";
+        $message = "Your CICS Alerts System verification code is: $otp. Expires in 5 minutes.";
         $sms = send_sms_iprog($phone, $message);
 
-        $success = true;
         header("Location: verify_otp.php?email=" . urlencode($email));
         exit;
       }
@@ -143,7 +145,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
       min-width: 280px;
     }
 
-    /* Left Panel - Registration Form */
     .left-panel h2 {
       color: #b91c1c;
       margin-bottom: 1.5rem;
@@ -195,7 +196,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
       text-decoration: underline;
     }
 
-    /* Two-column form grid */
     .form-grid {
       display: grid;
       grid-template-columns: repeat(2, 1fr);
@@ -207,7 +207,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
       flex-direction: column;
     }
 
-    /* Right Panel - Info Section */
     .right-panel img {
       width: 90px;
       height: 90px;
@@ -244,7 +243,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
       transform: scale(1.05);
     }
 
-    /* Responsive Design */
     @media (max-width: 992px) {
       .container-box {
         flex-direction: column-reverse;
@@ -308,7 +306,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
   <div class="container-box">
 
-    <!-- Left Panel -->
     <div class="left-panel">
       <h2>Create an Account</h2>
 
@@ -339,15 +336,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
           </div>
 
           <div>
-            <label class="block font-medium text-gray-700">Role</label>
-            <select name="role" class="form-select" required>
-              <option value="student" <?php if (($_POST['role'] ?? '') === 'student') echo 'selected'; ?>>Student</option>
-              <option value="faculty" <?php if (($_POST['role'] ?? '') === 'faculty') echo 'selected'; ?>>Faculty</option>
-              <option value="staff" <?php if (($_POST['role'] ?? '') === 'staff') echo 'selected'; ?>>Staff</option>
-            </select>
-          </div>
-
-          <div>
             <label class="block font-medium text-gray-700">Password</label>
             <input type="password" name="password" class="form-control" required>
           </div>
@@ -364,11 +352,10 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
       <a href="../index.php" class="top-link">Already have an account? Log in</a>
     </div>
 
-    <!-- Right Panel -->
     <div class="right-panel">
       <img src="../img/bsu.png" alt="CICS Logo">
       <h2>Welcome to CICS Alerts!</h2>
-      <p>Register with your personal details to use all features of the <strong>CICS Emergency & Important Alerts System</strong>. Stay informed. Stay safe!</p>
+      <p>Register to access the <strong>CICS Emergency & Important Alerts System</strong>. Stay informed. Stay safe!</p>
       <a href="../index.php" class="signin-btn">Sign In</a>
     </div>
 

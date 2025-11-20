@@ -25,7 +25,7 @@ if (!isset($_SESSION['logged_in']) || $_SESSION['user_role'] !== 'admin') {
     <style>
         body {
             font-family: 'Inter', sans-serif;
-            background: #fff6f6;
+            background: #ffffffff;
         }
 
         /* Map */

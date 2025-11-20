@@ -8,42 +8,28 @@ if (session_status() === PHP_SESSION_NONE) {
 
 $errors = [];
 
-// Define the single admin credentials
-define('ADMIN_EMAIL', 'admin@g.batstate-u.edu.ph');
-define('ADMIN_PASSWORD', 'StrongAdminPassword123!'); 
-
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
+
     $email = trim(strtolower($_POST['email'] ?? ''));
     $password = $_POST['password'] ?? '';
 
     if (!filter_var($email, FILTER_VALIDATE_EMAIL)) {
         $errors[] = "Enter a valid email.";
     }
+
     if ($password === '') {
         $errors[] = "Enter your password.";
     }
 
     if (empty($errors)) {
-        // Admin login
-        if ($email === ADMIN_EMAIL) {
-            if ($password === ADMIN_PASSWORD) {
-                $_SESSION['user_id'] = 0;
-                $_SESSION['user_role'] = 'admin';
-                $_SESSION['logged_in'] = true;
-                session_regenerate_id(true);
-                header("Location: adminDashboard/index.php");
-                exit;
-            } else {
-                $errors[] = "Invalid admin password.";
-            }
-        }
 
-        // Normal users login
         try {
             $db = pdo();
+
+            // Fetch user by email 
             $stmt = $db->prepare("
-                SELECT id, password_hash, password_salt, is_verified, role 
-                FROM users 
+                SELECT id, password_hash, password_salt, is_verified, role
+                FROM users
                 WHERE email = :email
                 LIMIT 1
             ");
@@ -54,25 +40,39 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             if (!$user) {
                 $errors[] = "Invalid email or password.";
             } else {
+
+                // Verify password
                 if (!verify_password($password, $user['password_hash'], $user['password_salt'])) {
                     $errors[] = "Invalid email or password.";
+
                 } elseif (!$user['is_verified']) {
                     $errors[] = "Account not verified. Please verify via OTP.";
+
                 } else {
+
+                    // Login successful — set session
                     $_SESSION['user_id'] = $user['id'];
                     $_SESSION['user_role'] = $user['role'];
                     $_SESSION['logged_in'] = true;
                     session_regenerate_id(true);
-                    header("Location: userDashboard/index.php");
+
+                    // Redirect according to role
+                    if ($user['role'] === 'admin') {
+                        header("Location: adminDashboard/index.php");
+                    } else {
+                        header("Location: userDashboard/index.php");
+                    }
                     exit;
                 }
             }
+
         } catch (Exception $e) {
             $errors[] = "Server error: " . $e->getMessage();
         }
     }
 }
 ?>
+
 
 <!DOCTYPE html>
 <html lang="en">

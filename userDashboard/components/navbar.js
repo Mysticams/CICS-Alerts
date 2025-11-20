@@ -157,9 +157,9 @@ class CustomNavbar extends HTMLElement {
         </div>
 
         <div class="user-menu">
-          <span class="user-name">John Doe</span>
+          <span class="user-name">Camille Pena</span>
 
-          <div class="user-avatar" id="avatarBtn">JD</div>
+          <div class="user-avatar" id="avatarBtn">CA</div>
 
           <div class="notification-bell">
             <a href="alerts.html" aria-label="View alerts">

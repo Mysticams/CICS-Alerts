@@ -169,7 +169,7 @@ class CustomNavbar extends HTMLElement {
           </div>
           <div class="dropdown-menu" id="dropdownMenu">
             <a href="settings.html" class="dropdown-item">Profile</a>
-            <a href="../loginSignup/logout/php" class="dropdown-item">Logout</a>
+            <a href="../loginSignup/logout.php" class="dropdown-item">Logout</a>
           </div>
         </div>
       </nav>

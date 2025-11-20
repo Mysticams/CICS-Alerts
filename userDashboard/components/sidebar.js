@@ -68,14 +68,11 @@ class CustomSidebar extends HTMLElement {
         }
         .menu-divider {
           height: 1px;
-          background-color: #991B1B;
-          margin: 1rem 0;
+          background-color: rgba(255, 255, 255, 0.25);
+          margin: 0.75rem 1.5rem;
         }
         .menu-item.logout {
-          margin-top: 14rem;
-        }
-        i {
-          stroke: currentColor;
+          margin-top: 0rem;
         }
       </style>
 
@@ -83,14 +80,14 @@ class CustomSidebar extends HTMLElement {
       <aside id="sidebar">
         <div class="sidebar-menu">
           <a href="index.php" class="menu-item"><i data-feather="home"></i><span>Dashboard</span></a>
-          <a href="alerts.html" class="menu-item"><i data-feather="bell"></i><span>All Alerts</span></a>
           <a href="user.php" class="menu-item"><i data-feather="alert-circle"></i><span>SOS Button</span></a>
-          <a href="userAck.html" class="menu-item"><i data-feather="message-circle"></i><span>Announcements</span></a>
+          <a href="announcements.php" class="menu-item"><i data-feather="message-circle"></i><span>Announcements</span></a>
           <a href="incidentReport.php" class="menu-item"><i data-feather="file-text"></i><span>Incident Report</span></a>
           <a href="user_hotlines.php" class="menu-item"><i data-feather="phone-call"></i><span>Emergency Hotlines</span></a>
           <a href="settings.php" class="menu-item"><i data-feather="settings"></i><span>Settings</span></a>
-          <a href="../SMS/user_dashboard.php" class="menu-item"><i data-feather="settings"></i><span>Settings</span></a>
+
           <div class="menu-divider"></div>
+
           <a href="../loginSignup/logout.php" class="menu-item logout"><i data-feather="log-out"></i><span>Logout</span></a>
         </div>
       </aside>

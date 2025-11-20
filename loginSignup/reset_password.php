@@ -251,7 +251,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
       <?php if ($success): ?>
         <div class="success">
-          Password reset successful. <a href="login.php">Log in</a>
+          Password reset successful. <a href="../index.php">Log in</a>
         </div>
       <?php else: ?>
         <?php if (!empty($errors)): ?>
