@@ -123,7 +123,7 @@ class CustomSidebar extends HTMLElement {
           <a href="index.php" class="menu-item"><i data-feather="home"></i><span>Dashboard</span></a>
           <a href="admin.php" class="menu-item"><i data-feather="alert-circle"></i><span>SOS Monitoring</span></a>
           <a href="incidentReport.php" class="menu-item"><i data-feather="file-text"></i><span>Incident Report</span></a>
-          <a href="announcement_form.php" class="menu-item"><i data-feather="send"></i><span>Send Announcements</span></a>
+          <a href="announcement.php" class="menu-item"><i data-feather="send"></i><span>Send Announcements</span></a>
           <a href="trackingAcknowledgement.html" class="menu-item"><i data-feather="check-square"></i><span>Acknowledgment</span></a>
           <a href="activity_log.php" class="menu-item"><i data-feather="layers"></i><span>Activity Logs</span></a>
           <a href="user_list.php" class="menu-item"><i data-feather="users"></i><span>User List</span></a>
